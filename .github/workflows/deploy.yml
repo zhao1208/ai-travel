@@ -45,14 +45,3 @@ jobs:
             standalone.html
             admin-dashboard-fix.html
             china-travel-companion-4.html
-
-      - name: Verify Deployment
-        if: ${{ secrets.SITE_URL != '' }}
-        run: |
-          echo "🔍 Verifying deployment..."
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.SITE_URL }}" || echo "000")
-          if [ "$STATUS" = "200" ]; then
-            echo "✅ Site is up (HTTP $STATUS)"
-          else
-            echo "⚠️  Site returned HTTP $STATUS (may need a moment to propagate)"
-          fi
