@@ -16,32 +16,54 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Deploy via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: ${{ secrets.FTP_SERVER_DIR }}
-          # 排除不需要上传的文件/目录
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/.github/**
-            **/node_modules/**
-            **/.workbuddy/**
-            **/overview.md
-            **/*.log
-            **/scripts/**
-            **/*-remote.py
-            **/*.sh
-            package.json
-            package-lock.json
-            server.js
-            test-api.js
-            test-express.js
-            .env.example
-            OAUTH_*.md
-            standalone.html
-            admin-dashboard-fix.html
-            china-travel-companion-4.html
+      - name: Prepare files for upload
+        run: |
+          echo "📦 准备部署文件..."
+          # 列出将要上传的文件
+          echo "=== 根目录文件 ==="
+          ls -la index.html .htaccess css/ js/ api/ 2>/dev/null || true
+
+      - name: Deploy via FTP (lftp)
+        run: |
+          sudo apt-get update && sudo apt-get install -y lftp
+          
+          echo "🚀 开始 FTP 部署..."
+          lftp -u "${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }}" \
+            "ftp://${{ secrets.FTP_SERVER }}" <<EOF
+          set ftp:ssl-allow no
+          set ftp:passive-mode on
+          
+          # 确保目标子目录存在（新网 FTP 有时会丢失）
+          mkdir -f api
+          mkdir -f css
+          mkdir -f js
+          mkdir -f images
+          
+          # 上传根目录文件
+          mput -O ${{ secrets.FTP_SERVER_DIR }} index.html .htaccess || true
+          
+          # 上传 css/
+          mirror --reverse --delete --verbose \
+            --exclude .gitkeep \
+            --exclude "*.log" \
+            css/ ${{ secrets.FTP_SERVER_DIR }}css/
+          
+          # 上传 js/
+          mirror --reverse --delete --verbose \
+            --exclude .gitkeep \
+            js/ ${{ secrets.FTP_SERVER_DIR }}js/
+          
+          # 上传 api/（PHP 后端）
+          mirror --reverse --delete --verbose \
+            api/ ${{ secrets.FTP_SERVER_DIR }}api/
+          
+          # 上传 images/（如果存在）
+          if [ -d images ]; then
+            mirror --reverse --delete --verbose \
+              images/ ${{ secrets.FTP_SERVER_DIR }}images/
+          fi
+          
+          bye
+          EOF
+          
+          echo "✅ 部署完成！"
