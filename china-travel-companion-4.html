@@ -1,0 +1,592 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head><script data-od-sandbox-shim>(function(){
+  function makeStore(){
+    var data = {};
+    var api = {
+      getItem: function(k){ return Object.prototype.hasOwnProperty.call(data, k) ? data[k] : null; },
+      setItem: function(k, v){ data[k] = String(v); },
+      removeItem: function(k){ delete data[k]; },
+      clear: function(){ data = {}; },
+      key: function(i){ return Object.keys(data)[i] || null; }
+    };
+    Object.defineProperty(api, 'length', { get: function(){ return Object.keys(data).length; } });
+    return api;
+  }
+  function tryShim(name){
+    var works = false;
+    try { works = !!window[name] && typeof window[name].getItem === 'function'; void window[name].length; }
+    catch (_) { works = false; }
+    if (works) return;
+    try { Object.defineProperty(window, name, { configurable: true, value: makeStore() }); }
+    catch (_) { try { window[name] = makeStore(); } catch (__) {} }
+  }
+  tryShim('localStorage');
+  tryShim('sessionStorage');
+  document.addEventListener('click', (e) => {
+    if (!e.target || !(e.target instanceof Element)) return;
+    var link = e.target.closest('a[href]');
+    if (!link) return;
+    var href = link.getAttribute('href');
+    if (href === null) return;
+    var isAnchor = href.startsWith('#') || href === '';
+    if (isAnchor) {
+      e.preventDefault();
+      if (href === '' || href === '#') {
+        window.scrollTo({ top: 0 });
+        history.replaceState(null, '', ' ');
+      } else {
+        var targetId = href.slice(1);
+        var target = targetId ? document.getElementById(targetId) : null;
+        if (target) {
+          target.scrollIntoView();
+          location.hash === href && history.replaceState(null, '', ' ');
+          location.hash = href;
+        }
+      }
+    } else if (link.getAttribute('target') === '_blank') {
+      e.preventDefault();
+      let safe = false;
+      try {
+        var url = new URL(href, location.href);
+        safe =
+          url.protocol === 'http:' ||
+          url.protocol === 'https:' ||
+          url.protocol === 'mailto:';
+      } catch (_) {}
+      safe && window.open(href, '_blank', 'noopener,noreferrer');
+    }
+  });
+})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>China Travel Companion</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--teal:oklch(58% .14 175);--tl:oklch(92% .06 175);--td:oklch(42% .12 175);--orange:oklch(62% .18 45);--ol:oklch(90% .08 45);--bg:#F5F6F8;--s:#fff;--fg:#1A1A2E;--m:#8A8A9A;--b:#E8E8EC;--g:#17A34A;--f:'Inter',-apple-system,system-ui,sans-serif;--r:16px}
+html{font-family:var(--f);font-size:16px;line-height:1.5;color:var(--fg);background:#0f172a;-webkit-font-smoothing:antialiased}
+body{display:flex;height:100vh;overflow:hidden}
+/* Sidebar */
+.side{width:240px;background:#111827;color:#fff;padding:14px 8px;overflow-y:auto;flex-shrink:0;display:flex;flex-direction:column;gap:1px}
+.side h1{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#6ee7b7;padding:6px 10px 8px}
+.ltoggle{display:flex;align-items:center;gap:6px;padding:7px 10px;border:1px solid #334155;border-radius:8px;cursor:pointer;background:0;color:#94a3b8;font-size:12px;font-weight:600;font-family:var(--f);transition:.15s;margin:0 2px 8px}
+.ltoggle:hover{background:#1e293b;color:#e2e8f0}
+.side h2{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#64748b;padding:10px 10px 4px;margin-top:4px;border-top:1px solid #1e293b}
+.si{display:flex;align-items:center;gap:8px;width:100%;padding:7px 10px;border:none;background:0;color:#94a3b8;font-size:12px;font-weight:500;border-radius:6px;cursor:pointer;text-align:left;font-family:var(--f);transition:.12s}
+.si:hover{background:#1e293b;color:#e2e8f0}
+.si.on{background:var(--teal);color:#fff;font-weight:600}
+/* Main */
+.mn{flex:1;display:flex;justify-content:center;align-items:center;overflow:hidden}
+/* Phone */
+.pf{width:390px;height:844px;background:var(--bg);border-radius:44px;overflow:hidden;position:relative;box-shadow:0 0 0 9px #1e293b,0 25px 80px rgba(0,0,0,.6);display:none}
+.pf.on{display:block}
+.st{height:54px;padding:14px 24px 0;display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:600;position:relative;z-index:5}
+.st .nch{position:absolute;left:50%;top:0;transform:translateX(-50%);width:126px;height:34px;background:#111;border-radius:0 0 20px 20px}
+.sc{position:absolute;top:54px;left:0;right:0;bottom:0;overflow-y:auto;background:var(--bg)}
+.sc::-webkit-scrollbar{width:0}
+.fl{position:absolute;top:8px;right:14px;z-index:30;width:34px;height:34px;border-radius:99px;background:rgba(255,255,255,.85);backdrop-filter:blur(8px);border:1px solid var(--b);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;transition:.15s;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.fl:hover{background:var(--s);box-shadow:0 4px 12px rgba(0,0,0,.1)}
+/* Tab bar */
+.tb{position:absolute;bottom:0;left:0;right:0;height:82px;background:var(--s);border-top:1px solid var(--b);display:flex;padding-top:6px;z-index:20}
+.tb button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;border:none;background:0;cursor:pointer;font-size:9.5px;font-weight:500;color:var(--m);font-family:var(--f);transition:.12s}
+.tb button.on{color:var(--teal)}
+.tb button .ti{font-size:18px;line-height:1}
+/* Components */
+.pad{padding:16px}.mt8{margin-top:8px}.mt12{margin-top:12px}.mb8{margin-bottom:8px}.mb12{margin-bottom:12px}.mb16{margin-bottom:16px}
+.cd{background:var(--s);border-radius:var(--r);overflow:hidden;border:1px solid var(--b)}
+.cd img{width:100%;height:140px;object-fit:cover}
+.cd .bd{padding:12px 14px}
+.tg{display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:99px;font-size:10.5px;font-weight:600;background:var(--tl);color:var(--td)}.tg.o{background:var(--ol);color:var(--orange)}.tg.off{background:#fef3c7;color:#92400e}.tg.rd{background:#FEE2E2;color:#DC2626}
+.cp{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:99px;font-size:12.5px;font-weight:500;border:1px solid var(--b);background:var(--s);cursor:pointer;white-space:nowrap;transition:.12s}.cp.on{background:var(--teal);color:#fff;border-color:var(--teal)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:13px 20px;border-radius:13px;font-size:14.5px;font-weight:600;border:none;cursor:pointer;min-height:46px;font-family:var(--f);transition:.12s}.bp{background:var(--orange);color:#fff}.bs{background:var(--teal);color:#fff}.bg{background:0;color:var(--teal);border:1px solid var(--b)}.bf{width:100%}.sm{padding:9px 14px;font-size:12.5px;min-height:38px;border-radius:10px}
+.hdr{position:sticky;top:0;z-index:5;background:var(--s);border-bottom:1px solid var(--b);padding:10px 14px;display:flex;align-items:center;gap:10px;min-height:44px}.hdr h2{font-size:16px;font-weight:600;flex:1}.hdr .bk{width:30px;height:30px;border:none;background:0;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--teal);font-size:18px}
+.offbar{background:#FEF3C7;border-radius:11px;padding:10px 14px;display:flex;align-items:center;gap:8px;font-size:12.5px;color:#92400e;font-weight:500}
+.aiin{background:var(--s);border:1.5px solid var(--teal);border-radius:16px;padding:12px 14px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 14px rgba(14,138,125,.07)}.aiin input{flex:1;border:none;outline:none;font-size:14px;font-family:var(--f);color:var(--fg);background:0}.aiin input::placeholder{color:var(--m)}.aiin .ab{display:flex;gap:4px}.aiin .ab button{width:34px;height:34px;border-radius:99px;border:none;background:var(--tl);color:var(--teal);cursor:pointer;font-size:14px}
+.qg{display:grid;grid-template-columns:1fr 1fr;gap:9px}.qc{background:var(--s);border:1px solid var(--b);border-radius:13px;padding:12px;display:flex;flex-direction:column;gap:5px;cursor:pointer;transition:.12s}.qc:hover{border-color:var(--teal)}.qc .qi{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}.qc .ql{font-size:13px;font-weight:600}.qc .qd{font-size:11px;color:var(--m)}
+.cs{display:flex;gap:10px;overflow-x:auto;padding:3px 0;scrollbar-width:none}.cs::-webkit-scrollbar{display:none}.cv{min-width:170px;border-radius:var(--r);overflow:hidden;background:var(--s);border:1px solid var(--b);cursor:pointer;flex-shrink:0}.cv img{width:100%;height:110px;object-fit:cover}.cv .ci{padding:8px 10px}.cv .cn2{font-size:14px;font-weight:600}.cv .ct2{display:flex;gap:4px;margin-top:5px}
+.msg{max-width:84%;padding:11px 14px;border-radius:16px;font-size:13.5px;line-height:1.5}.mu{align-self:flex-end;background:var(--teal);color:#fff;border-bottom-right-radius:4px}.ma{align-self:flex-start;background:var(--s);border:1px solid var(--b);border-bottom-left-radius:4px}.ma p{margin-bottom:7px}.ma p:last-child{margin-bottom:0}
+.ch{display:flex;overflow-x:auto;border-bottom:1px solid var(--b);background:var(--s);scrollbar-width:none}.ch::-webkit-scrollbar{display:none}.ch button{padding:10px 14px;font-size:12.5px;font-weight:500;border:none;background:0;cursor:pointer;white-space:nowrap;color:var(--m);border-bottom:2px solid transparent;transition:.12s;font-family:var(--f)}.ch button.on{color:var(--teal);border-bottom-color:var(--teal);font-weight:600}
+.hero{position:relative;height:200px;overflow:hidden}.hero img{width:100%;height:100%;object-fit:cover}.hero .ov{position:absolute;bottom:0;left:0;right:0;padding:18px 14px;background:linear-gradient(transparent,rgba(0,0,0,.72))}.hero .ov h1{color:#fff;font-size:24px;font-weight:800}.hero .ov p{color:rgba(255,255,255,.8);font-size:12.5px;margin-top:3px}
+.td2{position:relative;padding-left:22px;margin-bottom:14px}.td2::before{content:'';position:absolute;left:7px;top:22px;bottom:-14px;width:2px;background:var(--b)}.td2:last-child::before{display:none}.dot{position:absolute;left:0;top:4px;width:16px;height:16px;border-radius:99px;background:var(--teal);border:3px solid var(--tl);z-index:1}
+.ti2{background:var(--s);border:1px solid var(--b);border-radius:12px;padding:12px;margin-bottom:7px}.ti2 .t{font-size:11.5px;font-weight:600;color:var(--teal);margin-bottom:3px}.ti2 .p{font-size:14px;font-weight:600}.ti2 .d{font-size:12.5px;color:var(--m);margin-top:3px}
+.tb2{background:var(--s);border:1px solid var(--b);border-radius:var(--r);padding:14px}.tb2 textarea{width:100%;border:none;outline:none;resize:none;font-size:14px;font-family:var(--f);line-height:1.5;min-height:50px;background:0}
+.tr2{background:var(--s);border:1.5px solid var(--teal);border-radius:var(--r);padding:18px;text-align:center}.tr2 .cn-t{font-size:30px;font-weight:700;line-height:1.3;margin-bottom:6px}.tr2 .py{font-size:14px;color:var(--m);margin-bottom:5px;font-style:italic}.tr2 .eb{font-size:12.5px;color:var(--m)}
+.fsp{position:absolute;inset:0;background:var(--s);z-index:100;display:none;flex-direction:column;justify-content:center;align-items:center;padding:40px 28px;text-align:center}.fsp.on{display:flex}.fsp .fc{font-size:clamp(36px,10vw,56px);font-weight:700;line-height:1.3;margin-bottom:14px}.fsp .fp{font-size:17px;color:var(--m);margin-bottom:6px;font-style:italic}.fsp .fe{font-size:15px;color:var(--m);margin-bottom:36px}.fsp .fa{display:flex;gap:10px;position:absolute;bottom:56px}.fsp .fa button{width:52px;height:52px;border-radius:99px;border:none;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.cvf{background:#111;border-radius:14px;height:300px;position:relative;overflow:hidden;margin:10px 14px;display:flex;align-items:center;justify-content:center}.cvf img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.85}.cvf .vfo{position:absolute;inset:18px;border:2px solid rgba(255,255,255,.35);border-radius:10px}
+.ocr{background:var(--s);border:1px solid var(--b);border-radius:var(--r);overflow:hidden;margin:0 14px 10px}.ocr .oi{padding:12px 14px;border-bottom:1px solid var(--b)}.ocr .oi:last-child{border-bottom:none}.ocr .od{font-size:15px;font-weight:600;margin-bottom:2px}.ocr .oe{font-size:12.5px;color:var(--m)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+/* Admin */
+.ad{display:flex;height:100%}.an{width:200px;background:#fff;border-right:1px solid #e2e8f0;padding:14px 8px;display:flex;flex-direction:column;gap:1px}.an h1{font-size:13px;font-weight:700;padding:6px 10px;color:var(--teal)}.an button{padding:8px 10px;border:none;background:0;cursor:pointer;font-size:12px;font-weight:500;color:#64748b;border-radius:6px;text-align:left;font-family:var(--f)}.an button.on{background:var(--tl);color:var(--td);font-weight:600}.am{flex:1;padding:20px 28px;overflow-y:auto;background:#f8fafc}.ah{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}.ah h2{font-size:20px;font-weight:700}.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}.sc2{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px}.sc2 .sl{font-size:11px;color:#64748b;font-weight:500}.sc2 .sv{font-size:22px;font-weight:700;margin-top:3px}.sc2 .sch{font-size:11px;color:#16a34a;font-weight:600;margin-top:3px}.at{background:#fff;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden}.at table{width:100%;border-collapse:collapse}.at th{text-align:left;padding:10px 14px;font-size:11px;font-weight:600;color:#64748b;border-bottom:1px solid #e2e8f0;background:#f8fafc}.at td{padding:10px 14px;font-size:12.5px;border-bottom:1px solid #f1f5f9}.at tr:last-child td{border-bottom:none}.sp2{display:inline-block;padding:3px 9px;border-radius:99px;font-size:10.5px;font-weight:600}.sp2.a{background:#dcfce7;color:#16a34a}.sp2.d2{background:#fef3c7;color:#92400e}
+@media(max-width:700px){.side{display:none}.mn{padding:0}.pf{border-radius:0;height:100vh;width:100%}}
+</style>
+</head>
+<body>
+
+<nav class="side">
+<h1>🗺️ China Travel</h1>
+<button class="ltoggle" onclick="toggleLang()">🌐 <span id="langLbl">中文 / EN</span></button>
+<h2>Mobile</h2>
+<button class="si on" onclick="go('onb')">A. Onboarding</button>
+<button class="si" onclick="go('home')">B. Home</button>
+<button class="si" onclick="go('chat')">C. AI Chat</button>
+<button class="si" onclick="go('cities')">D. City List</button>
+<button class="si" onclick="go('cityd')">D2. City Detail</button>
+<button class="si" onclick="go('trip')">E. Trip Planner</button>
+<button class="si" onclick="go('trans')">F. Translate</button>
+<button class="si" onclick="go('phr')">G. Survival Phrases</button>
+<button class="si" onclick="go('cam')">H. Camera Explain</button>
+<button class="si" onclick="go('saved')">I. Saved</button>
+<button class="si" onclick="go('prof')">J. Profile & Sub</button>
+<h2>Desktop</h2>
+<button class="si" onclick="go('adm')">K. Admin Dashboard</button>
+</nav>
+
+<div class="mn">
+
+<!-- A. ONBOARDING -->
+<div class="pf on" id="f-onb">
+<div class="st"><span>9:41</span><div class="nch"></div><span>📶🔋</span></div>
+<div class="sc">
+<div id="ob1" style="display:flex;flex-direction:column;min-height:100%;padding:40px 22px 30px;justify-content:center">
+<div style="width:56px;height:56px;background:var(--teal);border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;font-size:28px;color:#fff">🌏</div>
+<div style="display:flex;gap:5px;margin-bottom:18px"><div style="width:22px;height:7px;border-radius:99px;background:var(--teal)"></div><div style="width:7px;height:7px;border-radius:99px;background:var(--b)"></div><div style="width:7px;height:7px;border-radius:99px;background:var(--b)"></div></div>
+<div style="font-size:26px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-bottom:7px" id="obT1">Welcome to<br>China Travel Companion</div>
+<div style="font-size:14px;color:var(--m);margin-bottom:26px;line-height:1.5" id="obS1">Your AI-powered travel assistant for exploring China.</div>
+<div id="langList">
+<button onclick="pickLang(this)" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1.5px solid var(--teal);border-radius:13px;background:var(--tl);cursor:pointer;font-size:14px;font-weight:500;font-family:var(--f);width:100%;margin-bottom:8px">🇺🇸 English<span style="margin-left:auto;width:20px;height:20px;border-radius:99px;background:var(--teal);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px">✓</span></button>
+<button onclick="pickLang(this)" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1.5px solid var(--b);border-radius:13px;background:var(--s);cursor:pointer;font-size:14px;font-weight:500;font-family:var(--f);width:100%;margin-bottom:8px">🇨🇳 简体中文<span style="margin-left:auto;width:20px;height:20px;border-radius:99px;border:2px solid var(--b)"></span></button>
+<button onclick="pickLang(this)" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1.5px solid var(--b);border-radius:13px;background:var(--s);cursor:pointer;font-size:14px;font-weight:500;font-family:var(--f);width:100%;margin-bottom:8px">🇪🇸 Español<span style="margin-left:auto;width:20px;height:20px;border-radius:99px;border:2px solid var(--b)"></span></button>
+<button onclick="pickLang(this)" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1.5px solid var(--b);border-radius:13px;background:var(--s);cursor:pointer;font-size:14px;font-weight:500;font-family:var(--f);width:100%">🇫🇷 Français<span style="margin-left:auto;width:20px;height:20px;border-radius:99px;border:2px solid var(--b)"></span></button>
+</div>
+<div style="margin-top:22px"><button class="btn bp bf" onclick="obStep(2)" id="obC1">Continue</button></div>
+</div>
+<div id="ob2" style="display:none;flex-direction:column;min-height:100%;padding:40px 22px 30px;justify-content:center">
+<div style="display:flex;gap:5px;margin-bottom:18px"><div style="width:7px;height:7px;border-radius:99px;background:var(--b)"></div><div style="width:22px;height:7px;border-radius:99px;background:var(--teal)"></div><div style="width:7px;height:7px;border-radius:99px;background:var(--b)"></div></div>
+<div style="font-size:26px;font-weight:800;line-height:1.2;margin-bottom:7px" id="obT2">What kind of traveler are you?</div>
+<div style="font-size:14px;color:var(--m);margin-bottom:24px" id="obS2">Select your interests to personalize your experience.</div>
+<div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:24px">
+<span class="cp on" onclick="this.classList.toggle('on')">🍜 Food</span><span class="cp" onclick="this.classList.toggle('on')">🏯 Culture</span><span class="cp on" onclick="this.classList.toggle('on')">🌿 Nature</span><span class="cp" onclick="this.classList.toggle('on')">🌃 Nightlife</span><span class="cp" onclick="this.classList.toggle('on')">👨‍👩‍👧 Family</span><span class="cp" onclick="this.classList.toggle('on')">💰 Budget</span><span class="cp" onclick="this.classList.toggle('on')">📸 Photo</span>
+</div>
+<div style="display:flex;gap:8px"><button class="btn bg" onclick="obStep(1)" style="width:80px" id="obB">Back</button><button class="btn bp" style="flex:1" onclick="obStep(3)" id="obC2">Continue</button></div>
+</div>
+<div id="ob3" style="display:none;flex-direction:column;min-height:100%;padding:40px 22px 30px;justify-content:center">
+<div style="display:flex;gap:5px;margin-bottom:18px"><div style="width:7px;height:7px;border-radius:99px;background:var(--b)"></div><div style="width:7px;height:7px;border-radius:99px;background:var(--b)"></div><div style="width:22px;height:7px;border-radius:99px;background:var(--teal)"></div></div>
+<div style="font-size:26px;font-weight:800;line-height:1.2;margin-bottom:7px" id="obT3">Where are you heading first?</div>
+<div style="font-size:14px;color:var(--m);margin-bottom:24px" id="obS3">Choose your first city to unlock guides and tips.</div>
+<div id="cityPick" style="display:flex;flex-direction:column;gap:8px;margin-bottom:24px">
+<button onclick="pickCity(this)" style="display:flex;align-items:center;gap:12px;padding:14px;border:1.5px solid var(--teal);border-radius:13px;background:var(--tl);cursor:pointer;font-size:14px;font-family:var(--f);width:100%">🏛️<div style="text-align:left"><div style="font-weight:600">Beijing</div><div style="font-size:11.5px;color:var(--m)">Great Wall · Forbidden City · Hutongs</div></div></button>
+<button onclick="pickCity(this)" style="display:flex;align-items:center;gap:12px;padding:14px;border:1.5px solid var(--b);border-radius:13px;background:var(--s);cursor:pointer;font-size:14px;font-family:var(--f);width:100%">🌆<div style="text-align:left"><div style="font-weight:600">Shanghai</div><div style="font-size:11.5px;color:var(--m)">The Bund · Dim Sum · Night Life</div></div></button>
+<button onclick="pickCity(this)" style="display:flex;align-items:center;gap:12px;padding:14px;border:1.5px solid var(--b);border-radius:13px;background:var(--s);cursor:pointer;font-size:14px;font-family:var(--f);width:100%">🐼<div style="text-align:left"><div style="font-weight:600">Chengdu</div><div style="font-size:11.5px;color:var(--m)">Pandas · Hotpot · Tea Houses</div></div></button>
+</div>
+<div style="display:flex;gap:8px"><button class="btn bg" onclick="obStep(2)" style="width:80px">Back</button><button class="btn bp" style="flex:1" onclick="go('home')" id="obStart">Start Exploring →</button></div>
+</div>
+</div></div>
+
+<!-- B. HOME -->
+<div class="pf" id="f-home">
+<div class="st"><span>9:41</span><div class="nch"></div><span>📶🔋</span></div>
+<div class="fl" onclick="toggleLang()">🌐</div>
+<div class="sc"><div class="pad" style="padding-bottom:10px">
+<div style="display:flex;align-items:center;gap:5px;font-size:13px;color:var(--m);margin-bottom:8px"><div style="width:6px;height:6px;background:var(--g);border-radius:99px"></div><span id="hSt">Beijing · Connected</span></div>
+<div style="font-size:22px;font-weight:800;letter-spacing:-.02em;margin-bottom:3px" id="hTi">Explore China</div>
+<div style="font-size:13.5px;color:var(--m);margin-bottom:10px" id="hSu">Your AI travel companion is ready</div>
+<div class="aiin" style="cursor:pointer" onclick="go('chat')">🔍<input id="hPh" placeholder="Ask anything about traveling in China…" readonly><div class="ab"><button>📷</button><button>🎤</button></div></div>
+</div>
+<div class="pad" style="padding-top:0"><div class="qg">
+<div class="qc" onclick="go('trip')"><div class="qi" style="background:var(--tl)">📋</div><div class="ql" id="hP1">Plan Trip</div><div class="qd" id="hP1d">AI itineraries</div></div>
+<div class="qc" onclick="go('trans')"><div class="qi" style="background:var(--ol)">💬</div><div class="ql" id="hP2">Translate</div><div class="qd" id="hP2d">Show to locals</div></div>
+<div class="qc" onclick="go('phr')"><div class="qi" style="background:#EDE9FE">🗣️</div><div class="ql" id="hP3">Phrases</div><div class="qd" id="hP3d">Survival words</div></div>
+<div class="qc" onclick="go('cam')"><div class="qi" style="background:#FEF3C7">📷</div><div class="ql" id="hP4">Camera</div><div class="qd" id="hP4d">Explain menus</div></div>
+</div></div>
+<div style="padding:0 16px 3px;display:flex;justify-content:space-between;align-items:center"><div style="font-size:16px;font-weight:700" id="hPop">Popular Cities</div><button style="background:0;border:0;color:var(--teal);font-size:12.5px;font-weight:600;cursor:pointer" onclick="go('cities')" id="hAll">See all</button></div>
+<div style="padding:0 16px 14px;margin-top:10px"><div class="cs">
+<div class="cv" onclick="go('cityd')"><img src="https://images.unsplash.com/photo-1508804185872-d7badad00f7d?w=400&h=260&fit=crop"><div class="ci"><div class="cn2">Beijing</div><div class="ct2"><span class="tg">🏛️ History</span><span class="tg">🍜 Food</span></div></div></div>
+<div class="cv" onclick="go('cityd')"><img src="https://images.unsplash.com/photo-1537531383496-f4749b8639a5?w=400&h=260&fit=crop"><div class="ci"><div class="cn2">Shanghai</div><div class="ct2"><span class="tg">🌆 Modern</span><span class="tg">🛍️ Shop</span></div></div></div>
+<div class="cv" onclick="go('cityd')"><img src="https://images.unsplash.com/photo-1558431382-27e303142255?w=400&h=260&fit=crop"><div class="ci"><div class="cn2">Chengdu</div><div class="ct2"><span class="tg">🐼 Pandas</span><span class="tg">🌶️ Spicy</span></div></div></div>
+</div></div>
+<div style="padding:0 16px 3px;font-size:16px;font-weight:700" id="hRec">Recommended</div>
+<div style="padding:0 16px 14px;margin-top:10px;display:flex;flex-direction:column;gap:9px">
+<div class="cd" style="display:flex;gap:10px;padding:10px;border-radius:14px"><img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=160&h=160&fit=crop" style="width:66px;height:66px;border-radius:10px;object-fit:cover"><div style="flex:1"><span class="tg">Beginner-friendly</span><div style="font-size:13px;font-weight:600;margin-top:4px" id="hR1">How to order food without speaking Chinese</div><div style="font-size:11px;color:var(--m);margin-top:3px">5 min read</div></div></div>
+<div class="cd" style="display:flex;gap:10px;padding:10px;border-radius:14px"><img src="https://images.unsplash.com/photo-1547981609-4b6bfe67ca0b?w=160&h=160&fit=crop" style="width:66px;height:66px;border-radius:10px;object-fit:cover"><div style="flex:1"><span class="tg o">Hidden Gems</span><div style="font-size:13px;font-weight:600;margin-top:4px" id="hR2">10 Beijing hutongs tourists usually miss</div><div style="font-size:11px;color:var(--m);margin-top:3px">8 min read</div></div></div>
+</div>
+<div style="padding:0 16px 20px"><div class="offbar" id="hOff">📥 Offline phrases available · <span style="color:var(--teal);font-weight:600">Download pack</span></div></div>
+</div>
+<div class="tb"><button class="on" onclick="go('home')"><span class="ti">🏠</span>Home</button><button onclick="go('cities')"><span class="ti">📍</span>Cities</button><button onclick="go('trans')"><span class="ti">💬</span>Translate</button><button onclick="go('saved')"><span class="ti">🔖</span>Saved</button><button onclick="go('prof')"><span class="ti">👤</span>Profile</button></div>
+</div>
+
+<!-- C. AI CHAT -->
+<div class="pf" id="f-chat">
+<div class="st"><span>9:41</span><div class="nch"></div><span>📶🔋</span></div>
+<div class="fl" onclick="toggleLang()">🌐</div>
+<div class="sc"><div class="hdr"><button class="bk" onclick="go('home')">←</button><h2 id="cTi">AI Assistant</h2><div style="display:flex;gap:5px"><span class="tg">Beijing</span><span class="tg">3d</span></div></div>
+<div style="padding:14px;display:flex;flex-direction:column;gap:10px;padding-bottom:130px">
+<div class="msg mu" id="cM1">Plan a 3-day food tour in Beijing. Budget: mid-range.</div>
+<div class="msg ma"><div style="display:flex;gap:5px;margin-bottom:6px"><span class="tg">Beijing</span><span class="tg">3 Days</span><span class="tg">🍜 Food</span></div>
+<p><strong id="cD1">Day 1 — Hutong Street Food</strong><br><span id="cD1d">Nanluoguxiang for jianbing. Lunch at Hua's for zhajiang noodles. Evening: Ghost Street for crayfish.</span></p>
+<p><strong id="cD2">Day 2 — Peking Duck</strong><br><span id="cD2d">Dim sum at Din Tai Fung. Wangfujing Snack Street. Dinner: Siji Minfu for Peking duck.</span></p>
+<p><strong id="cD3">Day 3 — Hidden Gems</strong><br><span id="cD3d">Jinfeng Steamed Buns. Lamb hotpot at Jubaoyuan. Tea at Lao She Teahouse.</span></p></div>
+<div style="display:flex;gap:7px;overflow-x:auto;padding-bottom:4px">
+<div style="min-width:140px;background:var(--s);border:1.5px solid var(--teal);border-radius:12px;padding:10px;cursor:pointer;flex-shrink:0" onclick="go('trip')"><div style="font-size:12.5px;font-weight:600;color:var(--teal)" id="cTrip">📋 Turn into trip</div><div style="font-size:10.5px;color:var(--m);margin-top:2px">Save Day 1/2/3</div></div>
+<div style="min-width:140px;background:var(--s);border:1px solid var(--b);border-radius:12px;padding:10px;cursor:pointer;flex-shrink:0"><div style="font-size:12.5px;font-weight:600" id="cSv">💾 Save answer</div></div></div>
+<div class="msg mu" id="cM2">How do I order at Jubaoyuan?</div>
+<div class="msg ma"><p><strong>Jubaoyuan 聚宝源</strong> — <span id="cM2r">Best lamb hotpot. Go before 11:30. ~¥100/person. Show this:</span></p></div>
+<div style="background:var(--s);border:2px solid var(--orange);border-radius:14px;padding:14px;margin:0 0 10px">
+<div style="font-size:10.5px;color:var(--orange);font-weight:600;margin-bottom:6px" id="cSh">SHOW TO STAFF</div>
+<div style="font-size:20px;font-weight:700;margin-bottom:4px">两个人，要一个铜锅涮肉</div>
+<div style="font-size:12.5px;color:var(--m);font-style:italic;margin-bottom:6px">Liǎng ge rén, yào yī gè tóng guō shuàn ròu</div>
+<div style="font-size:12.5px;color:var(--m);margin-bottom:10px" id="cShE">Two people, one copper-pot lamb hotpot please</div>
+<div style="display:flex;gap:6px"><button class="btn bp sm" style="flex:1" id="cPlay">🔊 Play</button><button class="btn bg sm" style="flex:1" id="cCopy">📋 Copy</button><button class="btn bg sm" style="flex:1" onclick="fsp('两个人，要一个铜锅涮肉','Liǎng ge rén, yào yī gè tóng guō shuàn ròu','Two people, one copper-pot lamb hotpot')" id="cFull">⬆️ Full</button></div>
+</div></div>
+<div style="position:absolute;bottom:82px;left:0;right:0;background:var(--s);border-top:1px solid var(--b);padding:8px 14px;display:flex;align-items:center;gap:7px;z-index:10"><input id="cPh" placeholder="Ask about routes, food, transport…" style="flex:1;padding:9px 13px;border:1px solid var(--b);border-radius:99px;font-size:13.5px;font-family:var(--f);outline:none"><button style="width:38px;height:38px;border-radius:99px;background:var(--teal);border:none;color:#fff;cursor:pointer;font-size:16px">→</button></div>
+</div>
+<div class="tb"><button onclick="go('home')"><span class="ti">🏠</span>Home</button><button onclick="go('cities')"><span class="ti">📍</span>Cities</button><button onclick="go('trans')"><span class="ti">💬</span>Translate</button><button onclick="go('saved')"><span class="ti">🔖</span>Saved</button><button onclick="go('prof')"><span class="ti">👤</span>Profile</button></div>
+</div>
+
+<!-- D. CITY LIST -->
+<div class="pf" id="f-cities">
+<div class="st"><span>9:41</span><div class="nch"></div><span>📶🔋</span></div>
+<div class="fl" onclick="toggleLang()">🌐</div>
+<div class="sc"><div class="pad"><div style="font-size:22px;font-weight:800;margin-bottom:3px" id="ciTi">Cities</div><div style="font-size:13.5px;color:var(--m);margin-bottom:14px" id="ciSu">Explore destination guides for travelers</div>
+<div style="background:var(--s);border:1px solid var(--b);border-radius:13px;padding:10px 14px;display:flex;align-items:center;gap:8px">🔍<input id="ciPh" placeholder="Search cities…" style="border:none;outline:none;font-size:13.5px;font-family:var(--f);flex:1;background:0"></div></div>
+<div style="padding:0 16px 10px;display:flex;gap:7px;overflow-x:auto;scrollbar-width:none"><span class="cp on">All</span><span class="cp">Beginner</span><span class="cp">Food</span><span class="cp">Nature</span></div>
+<div style="padding:0 16px 16px;display:flex;flex-direction:column;gap:10px">
+<div class="cd" onclick="go('cityd')" style="cursor:pointer"><img src="https://images.unsplash.com/photo-1508804185872-d7badad00f7d?w=600&h=200&fit=crop"><div class="bd"><div style="display:flex;justify-content:space-between"><div style="font-size:17px;font-weight:700">Beijing</div><span class="tg">Beginner</span></div><div style="font-size:12.5px;color:var(--m);margin-top:6px" id="ciBj">Capital · Great Wall · Hutongs · 4-5 days</div></div></div>
+<div class="cd" onclick="go('cityd')" style="cursor:pointer"><img src="https://images.unsplash.com/photo-1537531383496-f4749b8639a5?w=600&h=200&fit=crop"><div class="bd"><div style="display:flex;justify-content:space-between"><div style="font-size:17px;font-weight:700">Shanghai</div><div style="display:flex;gap:4px"><span class="tg">Beginner</span><span class="tg o">Nightlife</span></div></div><div style="font-size:12.5px;color:var(--m);margin-top:6px" id="ciSh">The Bund · Shopping · French Concession · 3-4 days</div></div></div>
+<div class="cd" onclick="go('cityd')" style="cursor:pointer"><img src="https://images.unsplash.com/photo-1558431382-27e303142255?w=600&h=200&fit=crop"><div class="bd"><div style="display:flex;justify-content:space-between"><div style="font-size:17px;font-weight:700">Chengdu</div><div style="display:flex;gap:4px"><span class="tg">Food</span><span class="tg">Pandas</span></div></div><div style="font-size:12.5px;color:var(--m);margin-top:6px" id="ciCd">Panda Base · Hotpot · Tea Culture · 3-4 days</div></div></div>
+</div></div>
+<div class="tb"><button onclick="go('home')"><span class="ti">🏠</span>Home</button><button class="on" onclick="go('cities')"><span class="ti">📍</span>Cities</button><button onclick="go('trans')"><span class="ti">💬</span>Translate</button><button onclick="go('saved')"><span class="ti">🔖</span>Saved</button><button onclick="go('prof')"><span class="ti">👤</span>Profile</button></div>
+</div>
+
+<!-- D2. CITY DETAIL -->
+<div class="pf" id="f-cityd">
+<div class="st" style="color:#fff"><span>9:41</span><div class="nch"></div><span>📶🔋</span></div>
+<div class="fl" onclick="toggleLang()">🌐</div>
+<div class="sc"><div class="hero"><img src="https://images.unsplash.com/photo-1508804185872-d7badad00f7d?w=800&h=500&fit=crop"><div style="position:absolute;top:8px;left:14px"><button style="width:34px;height:34px;border-radius:99px;background:rgba(0,0,0,.4);border:none;color:#fff;cursor:pointer;font-size:16px" onclick="go('cities')">←</button></div><div class="ov"><div style="display:flex;gap:5px;margin-bottom:5px"><span class="tg" style="background:rgba(255,255,255,.2);color:#fff">🏛️ History</span><span class="tg" style="background:rgba(255,255,255,.2);color:#fff">Beginner</span></div><h1>Beijing</h1><p id="cdHero">Capital · Best: Sep-Nov · 4-5 days</p></div></div>
+<div class="ch" id="ctabs"><button class="on" onclick="ctab(this,'cOv')" id="cdOv">Overview</button><button onclick="ctab(this,'cGu')" id="cdGu">Guides</button><button onclick="ctab(this,'cFo')" id="cdFo">Food</button><button onclick="ctab(this,'cTr')" id="cdTr">Transport</button><button onclick="ctab(this,'cCu')" id="cdCu">Culture</button><button onclick="ctab(this,'cPh')" id="cdPh">Phrases</button></div>
+<div id="cOv" class="pad ctp"><div style="font-size:14px;line-height:1.7;margin-bottom:14px" id="cdOvT">Beijing is China's capital with 3,000+ years of history. Excellent metro, English signs, and a mix of imperial grandeur and modern life.</div><div style="font-size:15px;font-weight:700;margin-bottom:10px" id="cdQf">Quick facts</div><div class="g2 mb16"><div class="cd" style="padding:10px;text-align:center"><div style="font-size:10.5px;color:var(--m)">Language</div><div style="font-size:13px;font-weight:600">Mandarin</div></div><div class="cd" style="padding:10px;text-align:center"><div style="font-size:10.5px;color:var(--m)">Currency</div><div style="font-size:13px;font-weight:600">CNY ¥</div></div><div class="cd" style="padding:10px;text-align:center"><div style="font-size:10.5px;color:var(--m)">Metro</div><div style="font-size:13px;font-weight:600">Excellent</div></div><div class="cd" style="padding:10px;text-align:center"><div style="font-size:10.5px;color:var(--m)">Budget/day</div><div style="font-size:13px;font-weight:600">¥300-600</div></div></div><button class="btn bs bf" onclick="go('chat')" id="cdAsk">🤖 Ask AI about Beijing</button></div>
+<div id="cGu" class="pad ctp" style="display:none"><div style="font-size:14px;font-weight:600;margin-bottom:10px">Mainstream Route</div><div class="cd mb12"><img src="https://images.unsplash.com/photo-1508804185872-d7badad00f7d?w=400&h=140&fit=crop" style="height:120px"><div class="bd"><div style="font-size:14px;font-weight:600">Forbidden City → Tiananmen → Temple of Heaven</div><div style="font-size:12px;color:var(--m);margin-top:5px" id="cdMr">Classic half-day walk. Start early.</div></div></div><div style="font-size:14px;font-weight:600;margin-bottom:10px">Hidden Gems</div><div class="cd" style="padding:14px"><div style="font-size:14px;font-weight:600">798 Art District</div><div style="font-size:12px;color:var(--m);margin-top:4px" id="cd798">Factory-turned art hub. Best weekday mornings.</div></div></div>
+<div id="cFo" class="pad ctp" style="display:none"><div style="font-size:14px;font-weight:600;margin-bottom:10px" id="cdMust">Must-try dishes</div><div style="display:flex;flex-direction:column;gap:9px"><div class="cd" style="display:flex;gap:10px;padding:10px"><img src="https://images.unsplash.com/photo-1526318896980-cf78c088247c?w=100&h=100&fit=crop" style="width:58px;height:58px;border-radius:10px;object-fit:cover"><div style="flex:1"><div style="font-size:13px;font-weight:600">Peking Duck 北京烤鸭</div><div style="font-size:11.5px;color:var(--m);margin-top:3px" id="cdDk">Crispy skin, pancakes, scallion, bean sauce</div><div style="margin-top:5px"><span class="tg">Iconic</span> <span class="tg">¥120-200</span></div></div></div><div class="cd" style="display:flex;gap:10px;padding:10px"><div style="width:58px;height:58px;border-radius:10px;background:var(--ol);display:flex;align-items:center;justify-content:center;font-size:24px">🫕</div><div style="flex:1"><div style="font-size:13px;font-weight:600">Lamb Hotpot 铜锅涮肉</div><div style="font-size:11.5px;color:var(--m);margin-top:3px" id="cdHp">Copper pot, lamb, sesame sauce</div><div style="margin-top:5px"><span class="tg">Winter</span> <span class="tg">¥80-120</span></div></div></div></div><div class="mt12"><button class="btn bg bf" onclick="go('cam')" id="cdCam">📷 Explain a menu with camera</button></div></div>
+<div id="cTr" class="pad ctp" style="display:none"><div style="display:flex;flex-direction:column;gap:10px"><div class="cd" style="padding:12px"><div style="font-size:14px;font-weight:600;margin-bottom:6px">🚇 Metro</div><div style="font-size:12.5px;line-height:1.6" id="cdMet">27 lines. Yikatong card. ¥3-9. 5am-11pm. Bilingual signs.</div></div><div class="cd" style="padding:12px"><div style="font-size:14px;font-weight:600;margin-bottom:6px">🚕 Taxi / Didi</div><div style="font-size:12.5px;line-height:1.6" id="cdTax">Use Didi app. Show destination in Chinese. Starting ¥13.</div></div><div class="cd" style="padding:12px"><div style="font-size:14px;font-weight:600;margin-bottom:6px">💳 Payment</div><div style="font-size:12.5px;line-height:1.6" id="cdPay">WeChat Pay & Alipay. Foreign cards now supported.</div></div></div></div>
+<div id="cCu" class="pad ctp" style="display:none"><div style="display:flex;flex-direction:column;gap:9px"><div class="cd" style="padding:12px"><div style="font-size:13.5px;font-weight:600">🧧 Tipping</div><div style="font-size:12px;color:var(--m);margin-top:4px" id="cdTip">Not expected. 10% at upscale restaurants appreciated.</div></div><div class="cd" style="padding:12px"><div style="font-size:13.5px;font-weight:600">🍵 Tea Culture</div><div style="font-size:12px;color:var(--m);margin-top:4px" id="cdTea">Tap two fingers on table when someone pours tea.</div></div><div class="cd" style="padding:12px"><div style="font-size:13.5px;font-weight:600">📱 QR Codes</div><div style="font-size:12px;color:var(--m);margin-top:4px" id="cdQr">QR codes everywhere — payments, menus, tickets.</div></div></div></div>
+<div id="cPh" class="pad ctp" style="display:none"><div style="font-size:14px;font-weight:600;margin-bottom:10px" id="cdEss">Beijing essentials</div><div style="display:flex;flex-direction:column;gap:9px"><div class="cd" style="padding:12px;cursor:pointer" onclick="fsp('请问，故宫怎么走？','Qǐngwèn, gùgōng zěnme zǒu?','How do I get to the Forbidden City?')"><div style="font-size:16px;font-weight:700;margin-bottom:3px">请问，故宫怎么走？</div><div style="font-size:12px;color:var(--m);font-style:italic">Qǐngwèn, gùgōng zěnme zǒu?</div><div style="font-size:12px;color:var(--m)">How do I get to the Forbidden City?</div></div><div class="cd" style="padding:12px"><div style="font-size:16px;font-weight:700;margin-bottom:3px">这个多少钱？</div><div style="font-size:12px;color:var(--m);font-style:italic">Zhège duōshǎo qián?</div><div style="font-size:12px;color:var(--m)">How much is this?</div></div></div><div class="mt12"><button class="btn bs bf" onclick="go('phr')" id="cdAll">View all survival phrases</button></div></div>
+</div>
+<div class="fsp" id="fspOv"><button style="position:absolute;top:54px;right:18px;width:36px;height:36px;border-radius:99px;background:var(--b);border:none;cursor:pointer;font-size:16px" onclick="cfsp()">✕</button><div class="fc" id="fspCn"></div><div class="fp" id="fspPy"></div><div class="fe" id="fspEn"></div><div class="fa"><button style="background:var(--teal);color:#fff">🔊</button><button style="background:var(--s);border:1px solid var(--b)">📋</button><button style="background:var(--s);border:1px solid var(--b)">💾</button></div></div>
+</div>
+
+<!-- E. TRIP PLANNER -->
+<div class="pf" id="f-trip">
+<div class="st"><span>9:41</span><div class="nch"></div><span>📶🔋</span></div>
+<div class="fl" onclick="toggleLang()">🌐</div>
+<div class="sc"><div class="hdr"><button class="bk" onclick="go('home')">←</button><h2 id="tTi">Trip Planner</h2><span class="tg o">✨ AI</span></div>
+<div class="pad"><div class="cd" style="padding:14px;margin-bottom:14px"><div style="font-size:14px;font-weight:700;margin-bottom:12px" id="tPt">Plan your trip</div>
+<div class="mb12"><div style="font-size:12px;font-weight:600;margin-bottom:6px" id="tC">City</div><div style="display:flex;gap:6px"><span class="cp on">Beijing</span><span class="cp">Shanghai</span></div></div>
+<div class="mb12"><div style="font-size:12px;font-weight:600;margin-bottom:6px" id="tDu">Duration</div><div style="display:flex;gap:6px"><span class="cp">1d</span><span class="cp on">3d</span><span class="cp">5d</span></div></div>
+<div class="mb12"><div style="font-size:12px;font-weight:600;margin-bottom:6px" id="tIn">Interests</div><div style="display:flex;gap:6px;flex-wrap:wrap"><span class="cp on">🍜 Food</span><span class="cp on">🏯 History</span><span class="cp">🌿 Nature</span></div></div>
+<div class="mb16"><div style="font-size:12px;font-weight:600;margin-bottom:6px" id="tBu">Budget</div><div style="display:flex;gap:6px"><span class="cp">Budget</span><span class="cp on">Mid-range</span><span class="cp">Luxury</span></div></div>
+<button class="btn bp bf" id="tGen">Generate Itinerary</button></div>
+<div style="font-size:15px;font-weight:700;margin-bottom:3px" id="tRes">Your Beijing Itinerary</div>
+<div style="font-size:12px;color:var(--m);margin-bottom:14px">3 days · Food & History · Mid-range</div>
+<div class="td2"><div class="dot"></div><div style="font-size:13px;font-weight:700;color:var(--teal);margin-bottom:7px">DAY 1 — Hutong Food Walk</div>
+<div class="ti2"><div class="t">9:00 AM</div><div class="p">Nanluoguxiang</div><div class="d" id="tD1">Hutong street · Jianbing vendors · 1.5 hrs</div></div>
+<div class="ti2"><div class="t">12:30 PM</div><div class="p">Hua's Restaurant 花家怡园</div><div class="d" id="tD1b">Zhajiang noodles · ~¥80/person</div></div>
+<div class="ti2"><div class="t">7:00 PM</div><div class="p">Ghost Street 鬼街</div><div class="d" id="tD1c">Late-night crayfish · Lively</div></div></div>
+<div class="td2"><div class="dot"></div><div style="font-size:13px;font-weight:700;color:var(--teal);margin-bottom:7px">DAY 2 — Imperial Beijing</div>
+<div class="ti2"><div class="t">8:00 AM</div><div class="p">Forbidden City 故宫</div><div class="d" id="tD2">Book ahead · 3-4 hrs · ¥60</div></div>
+<div class="ti2"><div class="t">12:30 PM</div><div class="p">Siji Minfu 四季民福</div><div class="d" id="tD2b">Peking Duck with view · ~¥150</div></div></div>
+<div class="td2"><div class="dot"></div><div style="font-size:13px;font-weight:700;color:var(--teal);margin-bottom:7px">DAY 3 — Great Wall + Hotpot</div>
+<div class="ti2"><div class="t">7:00 AM</div><div class="p">Mutianyu Great Wall 慕田峪</div><div class="d" id="tD3">Less crowded · Cable car · ¥40+120</div></div>
+<div class="ti2"><div class="t">2:00 PM</div><div class="p">Jubaoyuan 聚宝源</div><div class="d" id="tD3b">Best lamb hotpot · ~¥100</div></div></div>
+<div style="display:flex;gap:7px;margin-top:14px"><button class="btn bg" style="flex:1" id="tSv">💾 Save offline</button><button class="btn bp" style="flex:1" id="tRe">🔄 Regenerate</button></div>
+<div style="margin-top:14px;padding:14px;background:linear-gradient(135deg,oklch(95% .04 175),oklch(95% .06 45));border-radius:14px;border:1px solid var(--b)"><div style="font-size:13px;font-weight:700;margin-bottom:3px" id="tPrT">✨ Unlock Pro Planning</div><div style="font-size:12px;color:var(--m);margin-bottom:10px" id="tPrS">Advanced customization, unlimited regenerations.</div><button class="btn sm bg" style="border-color:var(--orange);color:var(--orange)" id="tPrC">Upgrade to Pro →</button></div>
+</div></div></div>
+
+<!-- F. TRANSLATE -->
+<div class="pf" id="f-trans">
+<div class="st"><span>9:41</span><div class="nch"></div><span>📶🔋</span></div>
+<div class="fl" onclick="toggleLang()">🌐</div>
+<div class="sc"><div class="pad" style="padding-bottom:6px"><div style="font-size:22px;font-weight:800;margin-bottom:3px" id="trTi">Translate</div><div style="font-size:13.5px;color:var(--m);margin-bottom:10px" id="trSu">Say it. Show it. Get understood.</div></div>
+<div style="padding:0 16px 10px;display:flex;gap:7px;overflow-x:auto;scrollbar-width:none"><span class="cp on">🍽️ Restaurant</span><span class="cp">🚕 Taxi</span><span class="cp">🛍️ Shopping</span><span class="cp">🏨 Hotel</span><span class="cp">🆘 Emergency</span></div>
+<div style="padding:0 16px 8px"><div class="tb2"><div style="font-size:10.5px;color:var(--m);font-weight:600;margin-bottom:5px">ENGLISH</div><textarea>Can I have the bill please?</textarea><div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px"><button style="background:0;border:0;cursor:pointer;font-size:18px;color:var(--m)">🎤</button><button class="btn bp sm" id="trBtn">Translate</button></div></div></div>
+<div style="padding:0 16px 10px"><div class="tr2"><div style="font-size:10.5px;color:var(--teal);font-weight:600;margin-bottom:10px" id="trLbl">CHINESE — SHOW TO STAFF</div><div class="cn-t">请买单</div><div class="py">Qǐng mǎidān</div><div class="eb" id="trBack">Please give me the bill</div><div style="display:flex;gap:7px;margin-top:14px;justify-content:center"><button class="btn bp sm">🔊 Play</button><button class="btn bg sm">📋 Copy</button><button class="btn bg sm" onclick="fsp('请买单','Qǐng mǎidān','Please give me the bill')">⬆️ Full</button></div></div></div>
+<div style="padding:0 16px"><div style="font-size:13.5px;font-weight:600;margin-bottom:8px" id="trQk">Quick phrases</div></div>
+<div style="padding:0 16px 16px;display:flex;flex-direction:column;gap:7px">
+<div class="cd" style="padding:10px"><div style="font-size:15px;font-weight:600">我要这个</div><div style="font-size:12px;color:var(--m);font-style:italic">Wǒ yào zhège · I want this one</div></div>
+<div class="cd" style="padding:10px"><div style="font-size:15px;font-weight:600">不要辣</div><div style="font-size:12px;color:var(--m);font-style:italic">Bù yào là · No spicy please</div></div>
+<div class="cd" style="padding:10px"><div style="font-size:15px;font-weight:600">我对花生过敏</div><div style="font-size:12px;color:var(--m);font-style:italic">Wǒ duì huāshēng guòmǐn · I'm allergic to peanuts</div></div>
+</div></div>
+<div class="fsp" id="fspTr"><button style="position:absolute;top:54px;right:18px;width:36px;height:36px;border-radius:99px;background:var(--b);border:none;cursor:pointer;font-size:16px" onclick="document.getElementById('fspTr').classList.remove('on')">✕</button><div class="fc" style="font-size:clamp(40px,12vw,60px)">请买单</div><div class="fp">Qǐng mǎidān</div><div class="fe">Please give me the bill</div><div class="fa"><button style="background:var(--teal);color:#fff;font-size:26px">🔊</button><button style="background:var(--s);border:1px solid var(--b);font-size:22px">📋</button><button style="background:var(--s);border:1px solid var(--b);font-size:22px">💾</button></div></div>
+<div class="tb"><button onclick="go('home')"><span class="ti">🏠</span>Home</button><button onclick="go('cities')"><span class="ti">📍</span>Cities</button><button class="on" onclick="go('trans')"><span class="ti">💬</span>Translate</button><button onclick="go('saved')"><span class="ti">🔖</span>Saved</button><button onclick="go('prof')"><span class="ti">👤</span>Profile</button></div>
+</div>
+
+<!-- G. SURVIVAL PHRASES -->
+<div class="pf" id="f-phr">
+<div class="st"><span>9:41</span><div class="nch"></div><span>📶🔋</span></div>
+<div class="fl" onclick="toggleLang()">🌐</div>
+<div class="sc"><div class="hdr"><button class="bk" onclick="go('home')">←</button><h2 id="pTi">Survival Phrases</h2><span class="tg off">📥 Offline</span></div>
+<div style="padding:6px 14px 0;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none"><span class="cp on">Essentials</span><span class="cp">🍽️ Food</span><span class="cp">🚕 Taxi</span><span class="cp">🆘 Emergency</span></div>
+<div class="pad"><div class="offbar mb16" id="pDl">✓ 48 phrases downloaded · Works offline</div>
+<div style="display:flex;flex-direction:column;gap:9px">
+<div class="cd" style="padding:12px"><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:16px;font-weight:700">你好</div><div style="display:flex;gap:6px"><button style="background:0;border:0;cursor:pointer;font-size:16px">🔊</button><button style="background:0;border:0;cursor:pointer;font-size:16px" onclick="fsp('你好','Nǐ hǎo','Hello')">⬆️</button></div></div><div style="font-size:12px;color:var(--m);font-style:italic">Nǐ hǎo</div><div style="font-size:12px;color:var(--m)">Hello</div></div>
+<div class="cd" style="padding:12px"><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:16px;font-weight:700">谢谢</div><div style="display:flex;gap:6px"><button style="background:0;border:0;cursor:pointer;font-size:16px">🔊</button><button style="background:0;border:0;cursor:pointer;font-size:16px" onclick="fsp('谢谢','Xièxiè','Thank you')">⬆️</button></div></div><div style="font-size:12px;color:var(--m);font-style:italic">Xièxiè</div><div style="font-size:12px;color:var(--m)">Thank you</div></div>
+<div class="cd" style="padding:12px"><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:16px;font-weight:700">对不起</div><div style="display:flex;gap:6px"><button style="background:0;border:0;cursor:pointer;font-size:16px">🔊</button><button style="background:0;border:0;cursor:pointer;font-size:16px">⬆️</button></div></div><div style="font-size:12px;color:var(--m);font-style:italic">Duìbuqǐ</div><div style="font-size:12px;color:var(--m)">Sorry / Excuse me</div></div>
+<div class="cd" style="padding:12px"><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:16px;font-weight:700">我不会说中文</div><div style="display:flex;gap:6px"><button style="background:0;border:0;cursor:pointer;font-size:16px">🔊</button><button style="background:0;border:0;cursor:pointer;font-size:16px">⬆️</button></div></div><div style="font-size:12px;color:var(--m);font-style:italic">Wǒ bù huì shuō zhōngwén</div><div style="font-size:12px;color:var(--m)">I can't speak Chinese</div></div>
+<div class="cd" style="padding:12px"><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:16px;font-weight:700">洗手间在哪里？</div><div style="display:flex;gap:6px"><button style="background:0;border:0;cursor:pointer;font-size:16px">🔊</button><button style="background:0;border:0;cursor:pointer;font-size:16px">⬆️</button></div></div><div style="font-size:12px;color:var(--m);font-style:italic">Xǐshǒujiān zài nǎlǐ?</div><div style="font-size:12px;color:var(--m)">Where is the bathroom?</div></div>
+<div class="cd" style="padding:12px"><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:16px;font-weight:700">帮我叫救护车</div><div style="display:flex;gap:6px"><button style="background:0;border:0;cursor:pointer;font-size:16px">🔊</button><button style="background:0;border:0;cursor:pointer;font-size:16px">⬆️</button></div></div><div style="font-size:12px;color:var(--m);font-style:italic">Bāng wǒ jiào jiùhùchē</div><div style="font-size:12px;color:var(--m)">Please call an ambulance</div><span class="tg rd" style="margin-top:5px">Emergency</span></div>
+</div></div></div>
+<div class="fsp" id="fspP2"><button style="position:absolute;top:54px;right:18px;width:36px;height:36px;border-radius:99px;background:var(--b);border:none;cursor:pointer;font-size:16px" onclick="document.getElementById('fspP2').classList.remove('on')">✕</button><div class="fc" id="fspC2"></div><div class="fp" id="fspPp"></div><div class="fe" id="fspE2"></div><div class="fa"><button style="background:var(--teal);color:#fff;font-size:26px">🔊</button><button style="background:var(--s);border:1px solid var(--b);font-size:22px">📋</button><button style="background:var(--s);border:1px solid var(--b);font-size:22px">💾</button></div></div>
+</div>
+
+<!-- H. CAMERA EXPLAIN -->
+<div class="pf" id="f-cam">
+<div class="st" style="color:#fff"><span>9:41</span><div class="nch"></div><span>📶🔋</span></div>
+<div class="sc" style="background:#111">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px">
+<button style="background:0;border:0;color:#fff;cursor:pointer;font-size:18px" onclick="go('home')">←</button>
+<div style="display:flex;gap:5px"><span class="cp on" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.2);font-size:11.5px">🍽️ Menu</span><span class="cp" style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.6);border-color:rgba(255,255,255,.12);font-size:11.5px">🪧 Sign</span></div>
+<div style="width:22px"></div></div>
+<div class="cvf" id="camVf"><img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500&h=400&fit=crop"><div class="vfo"></div><div style="position:absolute;bottom:14px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.75);font-size:12.5px;font-weight:500;text-align:center" id="camH">Point at menu, sign, or text<br>and tap to scan</div></div>
+<div style="display:flex;justify-content:center;align-items:center;gap:28px;padding:20px" id="camBtns">
+<button style="width:44px;height:44px;border-radius:99px;background:rgba(255,255,255,.12);border:0;color:#fff;cursor:pointer;font-size:18px">🖼️</button>
+<button style="width:66px;height:66px;border-radius:99px;background:var(--orange);border:4px solid rgba(255,255,255,.3);cursor:pointer" onclick="showOCR()"></button>
+<button style="width:44px;height:44px;border-radius:99px;background:rgba(255,255,255,.12);border:0;color:#fff;cursor:pointer;font-size:18px">⚡</button></div>
+<div id="camLoad" style="display:none;flex-direction:column;align-items:center;padding:50px 22px;color:#fff"><div style="font-size:16px;font-weight:600;margin-bottom:14px" id="camAn">Analyzing menu…</div>
+<div style="display:flex;flex-direction:column;gap:10px;width:100%"><div style="display:flex;gap:8px;font-size:13px"><span style="color:var(--g)">✓</span> <span id="camS1">Recognizing text</span></div><div style="display:flex;gap:8px;font-size:13px"><span style="color:var(--g)">✓</span> <span id="camS2">Translating</span></div><div style="display:flex;gap:8px;font-size:13px"><span style="color:var(--orange)">●</span> <span id="camS3">Explaining dishes…</span></div></div>
+<button class="btn bg" style="margin-top:20px;color:rgba(255,255,255,.5);border-color:rgba(255,255,255,.15)" onclick="showRes()" id="camSr">Show results ↓</button></div>
+<div id="camRes" style="display:none;position:absolute;top:54px;left:0;right:0;bottom:0;background:var(--bg);overflow-y:auto;padding-bottom:16px">
+<div style="padding:14px 14px 6px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-size:17px;font-weight:700" id="camRT">Menu Explained</div><button style="background:0;border:0;cursor:pointer;color:var(--teal);font-size:13px;font-weight:600" onclick="resetCam()" id="camRe">📸 Scan again</button></div><div style="display:flex;gap:6px;margin-bottom:12px"><span class="tg">3 items</span><span class="tg o">🌶️ Spicy alert</span></div></div>
+<div class="ocr"><div class="oi"><div style="display:flex;justify-content:space-between"><div><div class="od">宫保鸡丁</div><div class="oe">Kung Pao Chicken</div></div><span class="tg rd">🌶️ Spicy</span></div><div style="font-size:12px;color:var(--m);margin-top:6px;line-height:1.5" id="camD1">Chicken stir-fried with peanuts, chili, Sichuan peppercorns.</div><div style="margin-top:8px;padding:8px;background:var(--tl);border-radius:8px;font-size:12px"><b style="color:var(--td)" id="camO1">💡 Order:</b> "请来一份宫保鸡丁"</div></div>
+<div class="oi"><div style="display:flex;justify-content:space-between"><div><div class="od">麻婆豆腐</div><div class="oe">Mapo Tofu</div></div><span class="tg rd">🌶️ Spicy</span></div><div style="font-size:12px;color:var(--m);margin-top:6px;line-height:1.5" id="camD2">Silken tofu in chili-bean paste with minced pork.</div><div style="margin-top:8px;padding:8px;background:var(--tl);border-radius:8px;font-size:12px"><b style="color:var(--td)">💡 Order:</b> "麻婆豆腐，少辣"</div></div>
+<div class="oi"><div style="display:flex;justify-content:space-between"><div><div class="od">清炒时蔬</div><div class="oe">Stir-fried Vegetables</div></div><span class="tg" style="background:#DCFCE7;color:#16A34A">🥬 Mild</span></div><div style="font-size:12px;color:var(--m);margin-top:6px;line-height:1.5" id="camD3">Fresh vegetables with garlic. Safe choice.</div></div></div>
+<div style="padding:14px;display:flex;gap:7px"><button class="btn bg" style="flex:1" onclick="go('trans')" id="camMore">💬 Translate more</button><button class="btn bp" style="flex:1" id="camSv">💾 Save results</button></div></div></div>
+</div>
+
+<!-- I. SAVED -->
+<div class="pf" id="f-saved">
+<div class="st"><span>9:41</span><div class="nch"></div><span>📶🔋</span></div>
+<div class="fl" onclick="toggleLang()">🌐</div>
+<div class="sc"><div class="pad" style="padding-bottom:6px"><div style="font-size:22px;font-weight:800;margin-bottom:3px" id="sTi">Saved</div><div style="font-size:13.5px;color:var(--m)" id="sSu">Access trips, phrases, and places offline</div></div>
+<div style="padding:0 16px 10px;display:flex;gap:7px;overflow-x:auto;scrollbar-width:none"><span class="cp on">All</span><span class="cp">📋 Trips</span><span class="cp">💬 Phrases</span><span class="cp">📍 Places</span></div>
+<div style="padding:0 16px 16px;display:flex;flex-direction:column;gap:10px">
+<div class="cd" style="padding:14px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span class="tg off" id="sDl">📥 Downloaded</span><span style="font-size:10.5px;color:var(--m)">12 MB</span></div><div style="font-size:15px;font-weight:700;margin-bottom:3px">Beijing City Pack</div><div style="font-size:12px;color:var(--m);margin-bottom:10px" id="sPk">48 phrases, city guide, food dictionary</div><div style="display:flex;gap:6px"><button class="btn bg sm" style="flex:1" id="sUp">Update</button><button class="btn bg sm" style="flex:1" id="sRm">Remove</button></div></div>
+<div class="cd" style="padding:14px;cursor:pointer" onclick="go('trip')"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span class="tg">📋 Trip</span><span style="font-size:10.5px;color:var(--m)">Today</span></div><div style="font-size:15px;font-weight:700;margin-bottom:3px">Beijing 3-Day Food Tour</div><div style="font-size:12px;color:var(--m)" id="sTr">3 days · Food & History · 15 stops</div></div>
+<div class="cd" style="padding:14px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span class="tg">💬 Phrases</span><span style="font-size:10.5px;color:var(--m)">12 saved</span></div><div style="font-size:15px;font-weight:700;margin-bottom:3px" id="sPh">Restaurant Phrases</div><div style="font-size:12px;color:var(--m)">请买单 · 我要这个 · 不要辣</div></div>
+<div class="cd" style="padding:14px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span class="tg" style="background:#EDE9FE;color:#6D28D9" id="sAv">Available</span><span style="font-size:10.5px;color:var(--m)">18 MB</span></div><div style="font-size:15px;font-weight:700;margin-bottom:3px">Shanghai City Pack</div><div style="font-size:12px;color:var(--m);margin-bottom:10px">52 phrases, city guide</div><button class="btn bs sm bf" id="sDlB">📥 Download for offline</button></div>
+</div></div>
+<div class="tb"><button onclick="go('home')"><span class="ti">🏠</span>Home</button><button onclick="go('cities')"><span class="ti">📍</span>Cities</button><button onclick="go('trans')"><span class="ti">💬</span>Translate</button><button class="on" onclick="go('saved')"><span class="ti">🔖</span>Saved</button><button onclick="go('prof')"><span class="ti">👤</span>Profile</button></div>
+</div>
+
+<!-- J. PROFILE -->
+<div class="pf" id="f-prof">
+<div class="st"><span>9:41</span><div class="nch"></div><span>📶🔋</span></div>
+<div class="fl" onclick="toggleLang()">🌐</div>
+<div class="sc"><div class="pad" style="padding-bottom:10px"><div style="font-size:22px;font-weight:800;margin-bottom:14px" id="prTi">Profile</div>
+<div class="cd" style="padding:14px;display:flex;gap:12px;align-items:center"><div style="width:48px;height:48px;border-radius:99px;background:var(--tl);display:flex;align-items:center;justify-content:center;font-size:20px">🧑</div><div style="flex:1"><div style="font-size:15px;font-weight:700">Alex Traveler</div><div style="font-size:12px;color:var(--m)">alex@email.com</div></div><span class="tg" id="prFr">Free</span></div></div>
+<div style="padding:0 16px 10px"><div class="cd" style="padding:14px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><div style="font-size:13px;font-weight:600" id="prQ">AI Questions Today</div><div style="font-size:13px;font-weight:700;color:var(--orange)">8 / 10</div></div><div style="height:7px;background:var(--b);border-radius:99px;overflow:hidden"><div style="height:100%;width:80%;background:var(--orange);border-radius:99px"></div></div><div style="font-size:10.5px;color:var(--m);margin-top:5px" id="prQs">Resets daily · Upgrade for unlimited</div></div></div>
+<div style="padding:0 16px 10px"><div class="cd" style="padding:14px;background:linear-gradient(135deg,oklch(96% .03 175),oklch(96% .04 45))"><div style="font-size:15px;font-weight:700;margin-bottom:3px" id="prUp">✨ Upgrade to Pro</div><div style="font-size:12px;color:var(--m);margin-bottom:10px" id="prUpS">Unlimited AI · Advanced trips · More languages</div><div style="display:flex;gap:6px;margin-bottom:10px"><div style="flex:1;padding:8px;background:var(--s);border-radius:10px;text-align:center;font-size:11px;font-weight:600" id="prFrT">Free<br><span style="font-size:18px;font-weight:700">10</span><br><span style="font-size:10px;color:var(--m)">AI/day</span></div><div style="flex:1;padding:8px;background:var(--s);border:2px solid var(--teal);border-radius:10px;text-align:center;font-size:11px;font-weight:600" id="prPrT">Pro<br><span style="font-size:18px;font-weight:700;color:var(--teal)">∞</span><br><span style="font-size:10px;color:var(--m)">AI/day</span></div></div><button class="btn bp sm bf" id="prCta">Upgrade — $4.99/mo</button></div></div>
+<div style="padding:0 16px;font-size:13px;font-weight:600;margin-bottom:8px" id="prSet">Settings</div>
+<div style="padding:0 16px 16px;display:flex;flex-direction:column">
+<div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--b)"><div style="font-size:14px" id="prLg">🌐 App Language</div><div style="font-size:13px;color:var(--m)">English</div></div>
+<div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--b)"><div style="font-size:14px" id="prOf">📥 Offline Packs</div><div style="font-size:13px;color:var(--m)">1 downloaded</div></div>
+<div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--b)"><div style="font-size:14px" id="prPv">🔒 Privacy & Data</div><div style="font-size:13px;color:var(--m)">→</div></div>
+<div style="display:flex;justify-content:space-between;padding:12px 0"><div style="font-size:14px" id="prHp">❓ Help & FAQ</div><div style="font-size:13px;color:var(--m)">→</div></div>
+</div></div>
+<div class="tb"><button onclick="go('home')"><span class="ti">🏠</span>Home</button><button onclick="go('cities')"><span class="ti">📍</span>Cities</button><button onclick="go('trans')"><span class="ti">💬</span>Translate</button><button onclick="go('saved')"><span class="ti">🔖</span>Saved</button><button class="on" onclick="go('prof')"><span class="ti">👤</span>Profile</button></div>
+</div>
+
+<!-- K. ADMIN -->
+<div class="pf" id="f-adm" style="width:1200px;border-radius:0;height:844px">
+<div class="ad"><div class="an"><h1>🗺️ China Travel</h1><button class="on">📊 Overview</button><button>🤖 AI Models</button><button>📝 Prompts</button><button>📚 RAG</button><button>👥 Usage</button></div>
+<div class="am"><div class="ah"><h2>Dashboard Overview</h2><button class="btn sm bs">+ Add Model</button></div>
+<div class="sg"><div class="sc2"><div class="sl">AI Calls</div><div class="sv">12,847</div><div class="sch">↑ 18%</div></div><div class="sc2"><div class="sl">Users</div><div class="sv">3,241</div><div class="sch">↑ 12%</div></div><div class="sc2"><div class="sl">Latency</div><div class="sv">1.8s</div><div class="sch">✓ Good</div></div><div class="sc2"><div class="sl">Cost</div><div class="sv">$487</div><div class="sch">↓ 5%</div></div></div>
+<div class="at mb8"><table><tr><th>Model</th><th>Provider</th><th>Calls</th><th>Latency</th><th>Status</th></tr><tr><td><b>gpt-4o</b></td><td>OpenAI</td><td>4,230</td><td>1.2s</td><td><span class="sp2 a">Active</span></td></tr><tr><td><b>claude-3.5</b></td><td>Anthropic</td><td>2,810</td><td>1.8s</td><td><span class="sp2 a">Active</span></td></tr><tr><td><b>gpt-4o-mini</b></td><td>OpenAI</td><td>5,120</td><td>0.6s</td><td><span class="sp2 a">Active</span></td></tr></table></div>
+<div style="font-size:16px;font-weight:600;margin:16px 0 10px">Prompt Registry</div>
+<div class="at mb8"><table><tr><th>Scene</th><th>Version</th><th>Lang</th><th>Status</th></tr><tr><td><code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:12px">trip_planner</code></td><td>v2.3</td><td>EN</td><td><span class="sp2 a">Live</span></td></tr><tr><td><code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:12px">ocr_menu</code></td><td>v1.8</td><td>EN→ZH</td><td><span class="sp2 a">Live</span></td></tr><tr><td><code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:12px">translate</code></td><td>v3.1</td><td>Multi</td><td><span class="sp2 a">Live</span></td></tr></table></div>
+<div style="display:flex;gap:14px"><div class="sc2" style="flex:1"><div class="sl">RAG Chunks</div><div class="sv">8,420</div></div><div class="sc2" style="flex:1"><div class="sl">Error Rate</div><div class="sv" style="color:#16a34a">0.8%</div></div></div>
+</div></div></div>
+
+</div>
+
+<script>
+/* ═══ NAVIGATION (CRITICAL) ═══ */
+var MAP={onb:'f-onb',home:'f-home',chat:'f-chat',cities:'f-cities',cityd:'f-cityd',trip:'f-trip',trans:'f-trans',phr:'f-phr',cam:'f-cam',saved:'f-saved',prof:'f-prof',adm:'f-adm'};
+var ORD=['onb','home','chat','cities','cityd','trip','trans','phr','cam','saved','prof','adm'];
+function go(k){var i;document.querySelectorAll('.pf').forEach(function(f){f.classList.remove('on')});var el=document.getElementById(MAP[k]);if(el){el.classList.add('on');var s=el.querySelector('.sc');if(s)s.scrollTop=0}document.querySelectorAll('.si').forEach(function(b){b.classList.remove('on')});i=ORD.indexOf(k);if(i>=0){var btns=document.querySelectorAll('.si');if(btns[i])btns[i].classList.add('on')}}
+
+/* ═══ ONBOARDING ═══ */
+function obStep(n){document.getElementById('ob1').style.display=n===1?'flex':'none';document.getElementById('ob2').style.display=n===2?'flex':'none';document.getElementById('ob3').style.display=n===3?'flex':'none'}
+function pickLang(btn){var ls=document.querySelectorAll('#langList button');for(var i=0;i<ls.length;i++){ls[i].style.borderColor='var(--b)';ls[i].style.background='var(--s)';var sp=ls[i].querySelector('span');if(sp){sp.style.background='';sp.style.borderColor='var(--b)';sp.textContent=''}}btn.style.borderColor='var(--teal)';btn.style.background='var(--tl)';var sp2=btn.querySelector('span');if(sp2){sp2.style.background='var(--teal)';sp2.style.borderColor='var(--teal)';sp2.textContent='✓'}}
+function pickCity(btn){var cs=document.querySelectorAll('#cityPick button');for(var i=0;i<cs.length;i++){cs[i].style.borderColor='var(--b)';cs[i].style.background='var(--s)'}btn.style.borderColor='var(--teal)';btn.style.background='var(--tl)'}
+
+/* ═══ CITY DETAIL TABS ═══ */
+function ctab(btn,id){document.querySelectorAll('#ctabs button').forEach(function(b){b.classList.remove('on')});btn.classList.add('on');document.querySelectorAll('.ctp').forEach(function(c){c.style.display='none'});var el=document.getElementById(id);if(el)el.style.display='block'}
+
+/* ═══ FULLSCREEN PHRASE ═══ */
+function fsp(cn,py,en){document.getElementById('fspCn').textContent=cn;document.getElementById('fspPy').textContent=py;document.getElementById('fspEn').textContent=en;document.getElementById('fspOv').classList.add('on')}
+function cfsp(){document.getElementById('fspOv').classList.remove('on')}
+
+/* ═══ CAMERA ═══ */
+function showOCR(){document.getElementById('camVf').style.display='none';document.getElementById('camBtns').style.display='none';document.getElementById('camLoad').style.display='flex'}
+function showRes(){document.getElementById('camLoad').style.display='none';document.getElementById('camRes').style.display='block'}
+function resetCam(){document.getElementById('camRes').style.display='none';document.getElementById('camVf').style.display='flex';document.getElementById('camBtns').style.display='flex'}
+
+/* ═══ i18n SYSTEM ═══ */
+var lang='en';
+var T={
+obT1:{en:'Welcome to<br>China Travel Companion',cn:'欢迎使用<br>中国旅行助手'},
+obS1:{en:'Your AI-powered travel assistant for exploring China.',cn:'你的 AI 中国旅行助手，探索中国从这里开始。'},
+obC1:{en:'Continue',cn:'继续'},
+obT2:{en:'What kind of traveler are you?',cn:'你是什么类型的旅行者？'},
+obS2:{en:'Select your interests to personalize your experience.',cn:'选择你的兴趣，为你个性化推荐。'},
+obC2:{en:'Continue',cn:'继续'},
+obB:{en:'Back',cn:'返回'},
+obT3:{en:'Where are you heading first?',cn:'你的第一站是哪里？'},
+obS3:{en:'Choose your first city to unlock guides and tips.',cn:'选择第一个城市，解锁攻略和贴士。'},
+obStart:{en:'Start Exploring →',cn:'开始探索 →'},
+hSt:{en:'Beijing · Connected',cn:'北京 · 已连接'},
+hTi:{en:'Explore China',cn:'探索中国'},
+hSu:{en:'Your AI travel companion is ready',cn:'你的 AI 旅行助手已就绪'},
+hPh:{en:'Ask anything about traveling in China…',cn:'问我任何关于中国旅行的问题…'},
+hP1:{en:'Plan Trip',cn:'规划行程'},hP1d:{en:'AI itineraries',cn:'AI 行程'},
+hP2:{en:'Translate',cn:'翻译'},hP2d:{en:'Show to locals',cn:'给当地人看'},
+hP3:{en:'Phrases',cn:'常用语'},hP3d:{en:'Survival words',cn:'应急词汇'},
+hP4:{en:'Camera',cn:'拍照'},hP4d:{en:'Explain menus',cn:'解释菜单'},
+hPop:{en:'Popular Cities',cn:'热门城市'},hAll:{en:'See all',cn:'查看全部'},
+hRec:{en:'Recommended',cn:'推荐内容'},
+hR1:{en:'How to order food without speaking Chinese',cn:'不会中文也能点餐的秘诀'},
+hR2:{en:'10 Beijing hutongs tourists usually miss',cn:'游客通常错过的10条北京胡同'},
+hOff:{en:'📥 Offline phrases available · <span style="color:var(--teal);font-weight:600">Download pack</span>',cn:'📥 离线短语可用 · <span style="color:var(--teal);font-weight:600">下载离线包</span>'},
+cTi:{en:'AI Assistant',cn:'AI 助手'},
+cM1:{en:'Plan a 3-day food tour in Beijing. Budget: mid-range.',cn:'帮我规划3天北京美食之旅。中等预算。'},
+cD1:{en:'Day 1 — Hutong Street Food',cn:'第1天 — 胡同街头美食'},
+cD1d:{en:'Nanluoguxiang for jianbing. Lunch at Hua\'s for zhajiang noodles. Evening: Ghost Street for crayfish.',cn:'南锣鼓巷吃煎饼。花家怡园吃炸酱面。晚上鬼街吃小龙虾。'},
+cD2:{en:'Day 2 — Peking Duck',cn:'第2天 — 北京烤鸭'},
+cD2d:{en:'Dim sum at Din Tai Fung. Wangfujing Snack Street. Dinner: Siji Minfu for Peking duck.',cn:'鼎泰丰点心。王府井小吃街。晚餐四季民福烤鸭。'},
+cD3:{en:'Day 3 — Hidden Gems',cn:'第3天 — 隐藏宝藏'},
+cD3d:{en:'Jinfeng Steamed Buns. Lamb hotpot at Jubaoyuan. Tea at Lao She Teahouse.',cn:'金丰包子。聚宝源涮羊肉。老舍茶馆喝茶。'},
+cTrip:{en:'📋 Turn into trip',cn:'📋 生成行程'},
+cSv:{en:'💾 Save answer',cn:'💾 保存回答'},
+cM2:{en:'How do I order at Jubaoyuan?',cn:'在聚宝源怎么点餐？'},
+cM2r:{en:'Best lamb hotpot. Go before 11:30. ~¥100/person. Show this:',cn:'最好的涮羊肉。11:30前到。~¥100/人。给服务员看：'},
+cSh:{en:'SHOW TO STAFF',cn:'给服务员看'},
+cShE:{en:'Two people, one copper-pot lamb hotpot please',cn:'两个人，要一个铜锅涮肉'},
+cPlay:{en:'🔊 Play',cn:'🔊 播放'},cCopy:{en:'📋 Copy',cn:'📋 复制'},cFull:{en:'⬆️ Full',cn:'⬆️ 全屏'},
+cPh:{en:'Ask about routes, food, transport…',cn:'问问路线、美食、交通…'},
+ciTi:{en:'Cities',cn:'城市'},ciSu:{en:'Explore destination guides for travelers',cn:'为旅行者打造的目的地指南'},
+ciPh:{en:'Search cities…',cn:'搜索城市…'},
+ciBj:{en:'Capital · Great Wall · Hutongs · 4-5 days',cn:'首都 · 长城 · 胡同 · 4-5天'},
+ciSh:{en:'The Bund · Shopping · French Concession · 3-4 days',cn:'外滩 · 购物 · 法租界 · 3-4天'},
+ciCd:{en:'Panda Base · Hotpot · Tea Culture · 3-4 days',cn:'熊猫基地 · 火锅 · 茶文化 · 3-4天'},
+cdHero:{en:'Capital · Best: Sep-Nov · 4-5 days',cn:'首都 · 最佳：9-11月 · 4-5天'},
+cdOv:{en:'Overview',cn:'概览'},cdGu:{en:'Guides',cn:'攻略'},cdFo:{en:'Food',cn:'美食'},cdTr:{en:'Transport',cn:'交通'},cdCu:{en:'Culture',cn:'文化'},cdPh:{en:'Phrases',cn:'短语'},
+cdOvT:{en:'Beijing is China\'s capital with 3,000+ years of history. Excellent metro, English signs, and a mix of imperial grandeur and modern life.',cn:'北京是中国首都，拥有3000多年历史。地铁便利，景点有英文标识，帝都气韵与现代生活交融。'},
+cdQf:{en:'Quick facts',cn:'快速了解'},
+cdAsk:{en:'🤖 Ask AI about Beijing',cn:'🤖 向 AI 问问北京'},
+cdMr:{en:'Classic half-day walk. Start early.',cn:'经典半日游。早点出发。'},
+cd798:{en:'Factory-turned art hub. Best weekday mornings.',cn:'工厂改造的艺术区。工作日上午最佳。'},
+cdMust:{en:'Must-try dishes',cn:'必尝美食'},
+cdDk:{en:'Crispy skin, pancakes, scallion, bean sauce',cn:'酥脆鸭皮、薄饼、葱丝、甜面酱'},
+cdHp:{en:'Copper pot, lamb, sesame sauce',cn:'铜锅、羊肉、麻酱'},
+cdCam:{en:'📷 Explain a menu with camera',cn:'📷 用相机解释菜单'},
+cdMet:{en:'27 lines. Yikatong card. ¥3-9. 5am-11pm. Bilingual signs.',cn:'27条线路。一卡通。¥3-9。5:00-23:00。中英双语标识。'},
+cdTax:{en:'Use Didi app. Show destination in Chinese. Starting ¥13.',cn:'用滴滴出行。给司机看中文目的地。起步价¥13。'},
+cdPay:{en:'WeChat Pay & Alipay. Foreign cards now supported.',cn:'微信支付和支付宝。现在支持外卡。'},
+cdTip:{en:'Not expected. 10% at upscale restaurants appreciated.',cn:'不需要给小费。高档餐厅10%会被感谢。'},
+cdTea:{en:'Tap two fingers on table when someone pours tea.',cn:'别人倒茶时用两指轻敲桌面表示感谢。'},
+cdQr:{en:'QR codes everywhere — payments, menus, tickets.',cn:'二维码无处不在——支付、菜单、门票。'},
+cdEss:{en:'Beijing essentials',cn:'北京必备短语'},
+cdAll:{en:'View all survival phrases',cn:'查看所有应急短语'},
+tTi:{en:'Trip Planner',cn:'行程规划'},
+tPt:{en:'Plan your trip',cn:'规划你的行程'},
+tC:{en:'City',cn:'城市'},tDu:{en:'Duration',cn:'天数'},tIn:{en:'Interests',cn:'兴趣'},tBu:{en:'Budget',cn:'预算'},
+tGen:{en:'Generate Itinerary',cn:'生成行程'},
+tRes:{en:'Your Beijing Itinerary',cn:'你的北京行程'},
+tD1:{en:'Hutong street · Jianbing vendors · 1.5 hrs',cn:'胡同街 · 煎饼摊 · 1.5小时'},
+tD1b:{en:'Zhajiang noodles · ~¥80/person',cn:'炸酱面 · ~¥80/人'},
+tD1c:{en:'Late-night crayfish · Lively',cn:'深夜小龙虾 · 热闹'},
+tD2:{en:'Book ahead · 3-4 hrs · ¥60',cn:'提前预约 · 3-4小时 · ¥60'},
+tD2b:{en:'Peking Duck with view · ~¥150',cn:'景观位烤鸭 · ~¥150'},
+tD3:{en:'Less crowded · Cable car · ¥40+120',cn:'人少 · 缆车 · ¥40+120'},
+tD3b:{en:'Best lamb hotpot · ~¥100',cn:'最好的涮羊肉 · ~¥100'},
+tSv:{en:'💾 Save offline',cn:'💾 保存离线'},tRe:{en:'🔄 Regenerate',cn:'🔄 重新生成'},
+tPrT:{en:'✨ Unlock Pro Planning',cn:'✨ 解锁 Pro 规划'},
+tPrS:{en:'Advanced customization, unlimited regenerations.',cn:'高级定制、无限重新生成。'},
+tPrC:{en:'Upgrade to Pro →',cn:'升级到 Pro →'},
+trTi:{en:'Translate',cn:'翻译'},trSu:{en:'Say it. Show it. Get understood.',cn:'说出来。展示出来。被理解。'},
+trBtn:{en:'Translate',cn:'翻译'},
+trLbl:{en:'CHINESE — SHOW TO STAFF',cn:'中文 — 给服务员看'},
+trBack:{en:'Please give me the bill',cn:'请买单'},
+trQk:{en:'Quick phrases',cn:'常用短语'},
+pTi:{en:'Survival Phrases',cn:'应急短语'},
+pDl:{en:'✓ 48 phrases downloaded · Works offline',cn:'✓ 48条短语已下载 · 离线可用'},
+camH:{en:'Point at menu, sign, or text<br>and tap to scan',cn:'对准菜单、标识或文字<br>点击扫描'},
+camAn:{en:'Analyzing menu…',cn:'正在分析菜单…'},
+camS1:{en:'Recognizing text',cn:'识别文字'},camS2:{en:'Translating',cn:'翻译中'},camS3:{en:'Explaining dishes…',cn:'解释菜品…'},
+camSr:{en:'Show results ↓',cn:'显示结果 ↓'},
+camRT:{en:'Menu Explained',cn:'菜单解读'},camRe:{en:'📸 Scan again',cn:'📸 重新扫描'},
+camD1:{en:'Chicken stir-fried with peanuts, chili, Sichuan peppercorns.',cn:'鸡肉配花生、辣椒、花椒翻炒。'},
+camD2:{en:'Silken tofu in chili-bean paste with minced pork.',cn:'嫩豆腐配豆瓣酱和肉末。'},
+camD3:{en:'Fresh vegetables with garlic. Safe choice.',cn:'时蔬蒜炒。安全之选。'},
+camO1:{en:'💡 Order:',cn:'💡 点餐：'},
+camMore:{en:'💬 Translate more',cn:'💬 继续翻译'},camSv:{en:'💾 Save results',cn:'💾 保存结果'},
+sTi:{en:'Saved',cn:'收藏'},sSu:{en:'Access trips, phrases, and places offline',cn:'离线访问行程、短语和地点'},
+sDl:{en:'📥 Downloaded',cn:'📥 已下载'},sUp:{en:'Update',cn:'更新'},sRm:{en:'Remove',cn:'删除'},
+sPk:{en:'48 phrases, city guide, food dictionary',cn:'48条短语、城市指南、美食词典'},
+sTr:{en:'3 days · Food & History · 15 stops',cn:'3天 · 美食历史 · 15个站点'},
+sPh:{en:'Restaurant Phrases',cn:'餐厅短语'},
+sAv:{en:'Available',cn:'可下载'},sDlB:{en:'📥 Download for offline',cn:'📥 下载离线包'},
+prTi:{en:'Profile',cn:'个人中心'},prFr:{en:'Free',cn:'免费'},
+prQ:{en:'AI Questions Today',cn:'今日 AI 提问'},prQs:{en:'Resets daily · Upgrade for unlimited',cn:'每日重置 · 升级无限使用'},
+prUp:{en:'✨ Upgrade to Pro',cn:'✨ 升级 Pro'},prUpS:{en:'Unlimited AI · Advanced trips · More languages',cn:'无限 AI · 高级行程 · 更多语言'},
+prFrT:{en:'Free<br><span style="font-size:18px;font-weight:700">10</span><br><span style="font-size:10px;color:var(--m)">AI/day</span>',cn:'免费<br><span style="font-size:18px;font-weight:700">10</span><br><span style="font-size:10px;color:var(--m)">次/天</span>'},
+prPrT:{en:'Pro<br><span style="font-size:18px;font-weight:700;color:var(--teal)">∞</span><br><span style="font-size:10px;color:var(--m)">AI/day</span>',cn:'Pro<br><span style="font-size:18px;font-weight:700;color:var(--teal)">∞</span><br><span style="font-size:10px;color:var(--m)">次/天</span>'},
+prCta:{en:'Upgrade — $4.99/mo',cn:'升级 — $4.99/月'},
+prSet:{en:'Settings',cn:'设置'},prLg:{en:'🌐 App Language',cn:'🌐 应用语言'},
+prOf:{en:'📥 Offline Packs',cn:'📥 离线包'},prPv:{en:'🔒 Privacy & Data',cn:'🔒 隐私与数据'},
+prHp:{en:'❓ Help & FAQ',cn:'❓ 帮助与 FAQ'}
+};
+
+function toggleLang(){
+  lang=lang==='en'?'cn':'en';
+  document.getElementById('langLbl').textContent=lang==='cn'?'EN / 中文':'中文 / EN';
+  for(var id in T){
+    var el=document.getElementById(id);
+    if(!el)continue;
+    var val=T[id][lang]||T[id].en;
+    if(id==='hOff'){el.innerHTML=val}
+    else if(id==='prFrT'||id==='prPrT'){el.innerHTML=val}
+    else if(id==='obT1'){el.innerHTML=val}
+    else{el.textContent=val}
+  }
+  /* Update tab bar labels */
+  var tabLabels={home:lang==='cn'?'首页':'Home',cities:lang==='cn'?'城市':'Cities',trans:lang==='cn'?'翻译':'Translate',saved:lang==='cn'?'收藏':'Saved',prof:lang==='cn'?'我的':'Profile'};
+  document.querySelectorAll('.tb').forEach(function(bar){
+    var btns=bar.querySelectorAll('button');
+    var keys=['home','cities','trans','saved','prof'];
+    for(var i=0;i<btns.length;i++){
+      var span=btns[i].querySelector('span:last-child')||btns[i].childNodes[btns[i].childNodes.length-1];
+      if(span&&span.nodeType===3)span.textContent=tabLabels[keys[i]];
+    }
+  });
+  /* Update sidebar */
+  var sideLabels=[
+    lang==='cn'?'A. 引导页':'A. Onboarding',
+    lang==='cn'?'B. 首页':'B. Home',
+    lang==='cn'?'C. AI 对话':'C. AI Chat',
+    lang==='cn'?'D. 城市列表':'D. City List',
+    lang==='cn'?'D2. 城市详情':'D2. City Detail',
+    lang==='cn'?'E. 行程规划':'E. Trip Planner',
+    lang==='cn'?'F. 翻译':'F. Translate',
+    lang==='cn'?'G. 常用短语':'G. Survival Phrases',
+    lang==='cn'?'H. 拍照解释':'H. Camera Explain',
+    lang==='cn'?'I. 收藏':'I. Saved',
+    lang==='cn'?'J. 个人中心':'J. Profile & Sub',
+    lang==='cn'?'K. 管理后台':'K. Admin Dashboard'
+  ];
+  var sideBtns=document.querySelectorAll('.si');
+  for(var j=0;j<sideBtns.length&&j<sideLabels.length;j++)sideBtns[j].textContent=sideLabels[j];
+}
+</script>
+</body>
+</html>

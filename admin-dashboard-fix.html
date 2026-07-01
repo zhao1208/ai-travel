@@ -1,0 +1,274 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head><script data-od-sandbox-shim>(function(){
+  function makeStore(){
+    var data = {};
+    var api = {
+      getItem: function(k){ return Object.prototype.hasOwnProperty.call(data, k) ? data[k] : null; },
+      setItem: function(k, v){ data[k] = String(v); },
+      removeItem: function(k){ delete data[k]; },
+      clear: function(){ data = {}; },
+      key: function(i){ return Object.keys(data)[i] || null; }
+    };
+    Object.defineProperty(api, 'length', { get: function(){ return Object.keys(data).length; } });
+    return api;
+  }
+  function tryShim(name){
+    var works = false;
+    try { works = !!window[name] && typeof window[name].getItem === 'function'; void window[name].length; }
+    catch (_) { works = false; }
+    if (works) return;
+    try { Object.defineProperty(window, name, { configurable: true, value: makeStore() }); }
+    catch (_) { try { window[name] = makeStore(); } catch (__) {} }
+  }
+  tryShim('localStorage');
+  tryShim('sessionStorage');
+  document.addEventListener('click', (e) => {
+    if (!e.target || !(e.target instanceof Element)) return;
+    var link = e.target.closest('a[href]');
+    if (!link) return;
+    var href = link.getAttribute('href');
+    if (href === null) return;
+    var isAnchor = href.startsWith('#') || href === '';
+    if (isAnchor) {
+      e.preventDefault();
+      if (href === '' || href === '#') {
+        window.scrollTo({ top: 0 });
+        history.replaceState(null, '', ' ');
+      } else {
+        var targetId = href.slice(1);
+        var target = targetId ? document.getElementById(targetId) : null;
+        if (target) {
+          target.scrollIntoView();
+          location.hash === href && history.replaceState(null, '', ' ');
+          location.hash = href;
+        }
+      }
+    } else if (link.getAttribute('target') === '_blank') {
+      e.preventDefault();
+      let safe = false;
+      try {
+        var url = new URL(href, location.href);
+        safe =
+          url.protocol === 'http:' ||
+          url.protocol === 'https:' ||
+          url.protocol === 'mailto:';
+      } catch (_) {}
+      safe && window.open(href, '_blank', 'noopener,noreferrer');
+    }
+  });
+})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin Dashboard Fix</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--teal:oklch(58% .14 175);--tl:oklch(92% .06 175);--td:oklch(42% .12 175);--orange:oklch(62% .18 45);--ol:oklch(90% .08 45);--bg:#F5F6F8;--s:#fff;--fg:#1A1A2E;--m:#8A8A9A;--b:#E8E8EC;--f:'Inter',-apple-system,system-ui,sans-serif}
+html{font-family:var(--f);font-size:16px;line-height:1.5;color:var(--fg)}
+body{display:flex;height:100vh;overflow:hidden;background:#0f172a;justify-content:center;align-items:center}
+.frame{width:1200px;height:844px;background:#f8fafc;border-radius:0;overflow:hidden;box-shadow:0 0 0 9px #1e293b,0 25px 80px rgba(0,0,0,.6);display:flex}
+.nav{width:200px;background:#fff;border-right:1px solid #e2e8f0;padding:14px 8px;display:flex;flex-direction:column;gap:1px}
+.nav h1{font-size:13px;font-weight:700;padding:6px 10px 12px;color:var(--teal)}
+.nb{padding:8px 10px;border:none;background:0;cursor:pointer;font-size:12.5px;font-weight:500;color:#64748b;border-radius:6px;text-align:left;font-family:var(--f);transition:.12s}
+.nb:hover{background:#f1f5f9}
+.nb.on{background:var(--tl);color:var(--td);font-weight:600}
+.content{flex:1;padding:20px 28px;overflow-y:auto}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.header h2{font-size:20px;font-weight:700}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.stat{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px}
+.stat .label{font-size:11px;color:#64748b;font-weight:500}
+.stat .value{font-size:22px;font-weight:700;margin-top:3px}
+.stat .change{font-size:11px;color:#16a34a;font-weight:600;margin-top:3px}
+.tbl{background:#fff;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;margin-bottom:16px}
+.tbl table{width:100%;border-collapse:collapse}
+.tbl th{text-align:left;padding:10px 14px;font-size:11px;font-weight:600;color:#64748b;border-bottom:1px solid #e2e8f0;background:#f8fafc}
+.tbl td{padding:10px 14px;font-size:12.5px;border-bottom:1px solid #f1f5f9}
+.tbl tr:last-child td{border-bottom:none}
+.sp{display:inline-block;padding:3px 9px;border-radius:99px;font-size:10.5px;font-weight:600}
+.sp.a{background:#dcfce7;color:#16a34a}
+.sp.d{background:#fef3c7;color:#92400e}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 14px;border-radius:10px;font-size:12.5px;font-weight:600;border:none;cursor:pointer;min-height:38px;font-family:var(--f)}
+.btn-bs{background:var(--teal);color:#fff}
+.btn-bg{background:0;color:var(--teal);border:1px solid #e2e8f0}
+.panel{display:none}
+.panel.on{display:block}
+.pair{display:flex;gap:14px;margin-bottom:16px}
+.pair>div{flex:1}
+.form-row{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.form-row label{font-size:12px;font-weight:600;color:#64748b}
+.form-row input,.form-row select,.form-row textarea{padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:var(--f);outline:none}
+.form-row input:focus,.form-row select:focus,.form-row textarea:focus{border-color:var(--teal)}
+.badge-row{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;background:#fff;border:1px solid #e2e8f0}
+.badge.teal{background:var(--tl);color:var(--td);border-color:transparent}
+.section-title{font-size:15px;font-weight:700;margin:18px 0 10px}
+.mini-card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px;margin-bottom:10px}
+.mini-card h3{font-size:14px;font-weight:600;margin-bottom:6px}
+.mini-card p{font-size:12px;color:#64748b;line-height:1.6}
+.tag-row{display:flex;gap:4px;margin-top:8px}
+.tag{display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:600;background:#f1f5f9;color:#64748b}
+.chart-placeholder{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:20px;text-align:center;margin-bottom:16px}
+.chart-bars{display:flex;align-items:flex-end;gap:8px;height:120px;padding:0 10px}
+.chart-bars .bar{flex:1;background:var(--tl);border-radius:4px 4px 0 0;position:relative;transition:.3s}
+.chart-bars .bar:hover{background:var(--teal)}
+.chart-bars .bar span{position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);font-size:9px;color:#64748b;white-space:nowrap}
+</style>
+</head>
+<body>
+<div class="frame">
+<div class="nav">
+<h1>🗺️ China Travel</h1>
+<button class="nb on" onclick="switchPanel(this,'pOverview')">📊 Overview</button>
+<button class="nb" onclick="switchPanel(this,'pModels')">🤖 AI Models</button>
+<button class="nb" onclick="switchPanel(this,'pPrompts')">📝 Prompt Registry</button>
+<button class="nb" onclick="switchPanel(this,'pRAG')">📚 RAG Knowledge</button>
+<button class="nb" onclick="switchPanel(this,'pUsage')">👥 Usage & Cost</button>
+</div>
+<div class="content">
+
+<!-- ═══ OVERVIEW ═══ -->
+<div class="panel on" id="pOverview">
+<div class="header"><h2>Dashboard Overview</h2><div style="display:flex;gap:8px;align-items:center"><span style="font-size:13px;color:#64748b">May 2026</span><button class="btn btn-bs" onclick="switchPanel(document.querySelectorAll('.nb')[1],'pModels')">+ Add Model</button></div></div>
+<div class="stat-grid">
+<div class="stat"><div class="label">Total AI Calls</div><div class="value">12,847</div><div class="change">↑ 18% vs last week</div></div>
+<div class="stat"><div class="label">Active Users</div><div class="value">3,241</div><div class="change">↑ 12% vs last week</div></div>
+<div class="stat"><div class="label">Avg Response Time</div><div class="value">1.8s</div><div class="change">✓ Good</div></div>
+<div class="stat"><div class="label">Monthly Cost</div><div class="value">$487</div><div class="change">↓ 5% vs last month</div></div>
+</div>
+<div class="section-title">Weekly AI Call Volume</div>
+<div class="chart-placeholder">
+<div class="chart-bars">
+<div class="bar" style="height:45%"><span>Mon</span></div>
+<div class="bar" style="height:62%"><span>Tue</span></div>
+<div class="bar" style="height:58%"><span>Wed</span></div>
+<div class="bar" style="height:75%"><span>Thu</span></div>
+<div class="bar" style="height:88%"><span>Fri</span></div>
+<div class="bar" style="height:70%"><span>Sat</span></div>
+<div class="bar" style="height:40%"><span>Sun</span></div>
+</div>
+</div>
+<div class="section-title">Active Models</div>
+<div class="tbl"><table><tr><th>Model</th><th>Provider</th><th>Calls Today</th><th>Avg Latency</th><th>Status</th></tr>
+<tr><td><strong>gpt-4o</strong></td><td>OpenAI</td><td>4,230</td><td>1.2s</td><td><span class="sp a">Active</span></td></tr>
+<tr><td><strong>claude-3.5-sonnet</strong></td><td>Anthropic</td><td>2,810</td><td>1.8s</td><td><span class="sp a">Active</span></td></tr>
+<tr><td><strong>gpt-4o-mini</strong></td><td>OpenAI</td><td>5,120</td><td>0.6s</td><td><span class="sp a">Active</span></td></tr>
+<tr><td><strong>deepseek-v3</strong></td><td>DeepSeek</td><td>687</td><td>2.1s</td><td><span class="sp d">Testing</span></td></tr></table></div>
+</div>
+
+<!-- ═══ AI MODELS ═══ -->
+<div class="panel" id="pModels">
+<div class="header"><h2>🤖 AI Model Configuration</h2><button class="btn btn-bs">+ Add New Model</button></div>
+<div class="badge-row"><span class="badge teal">4 models configured</span><span class="badge">Default: gpt-4o-mini</span><span class="badge">Fallback: gpt-4o</span></div>
+<div class="tbl"><table><tr><th>Model</th><th>Provider</th><th>API Endpoint</th><th>Temp</th><th>Max Tokens</th><th>Cost/1K</th><th>Status</th><th>Actions</th></tr>
+<tr><td><strong>gpt-4o</strong></td><td>OpenAI</td><td style="font-size:11px;color:#64748b">/v1/chat/completions</td><td>0.7</td><td>4096</td><td>$0.005</td><td><span class="sp a">Active</span></td><td><button class="btn btn-bg" style="padding:4px 10px;min-height:28px;font-size:11px">Edit</button></td></tr>
+<tr><td><strong>claude-3.5-sonnet</strong></td><td>Anthropic</td><td style="font-size:11px;color:#64748b">/v1/messages</td><td>0.5</td><td>4096</td><td>$0.003</td><td><span class="sp a">Active</span></td><td><button class="btn btn-bg" style="padding:4px 10px;min-height:28px;font-size:11px">Edit</button></td></tr>
+<tr><td><strong>gpt-4o-mini</strong></td><td>OpenAI</td><td style="font-size:11px;color:#64748b">/v1/chat/completions</td><td>0.8</td><td>2048</td><td>$0.00015</td><td><span class="sp a">Active</span></td><td><button class="btn btn-bg" style="padding:4px 10px;min-height:28px;font-size:11px">Edit</button></td></tr>
+<tr><td><strong>deepseek-v3</strong></td><td>DeepSeek</td><td style="font-size:11px;color:#64748b">/v1/chat/completions</td><td>0.6</td><td>4096</td><td>$0.0003</td><td><span class="sp d">Testing</span></td><td><button class="btn btn-bg" style="padding:4px 10px;min-height:28px;font-size:11px">Edit</button></td></tr></table></div>
+<div class="section-title">Add / Edit Model</div>
+<div class="pair">
+<div class="form-row"><label>Model Name</label><input placeholder="e.g. gpt-4o-turbo"></div>
+<div class="form-row"><label>Provider</label><select><option>OpenAI</option><option>Anthropic</option><option>DeepSeek</option><option>Google</option></select></div>
+</div>
+<div class="pair">
+<div class="form-row"><label>API Key</label><input type="password" placeholder="sk-…"></div>
+<div class="form-row"><label>API Endpoint</label><input placeholder="/v1/chat/completions"></div>
+</div>
+<div class="pair">
+<div class="form-row"><label>Temperature</label><input type="number" value="0.7" step="0.1" min="0" max="2"></div>
+<div class="form-row"><label>Max Tokens</label><input type="number" value="4096"></div>
+<div class="form-row"><label>Cost per 1K tokens ($)</label><input type="number" value="0.005" step="0.0001"></div>
+</div>
+<div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-bs">Save Model</button><button class="btn btn-bg">Test Connection</button></div>
+</div>
+
+<!-- ═══ PROMPT REGISTRY ═══ -->
+<div class="panel" id="pPrompts">
+<div class="header"><h2>📝 Prompt Registry</h2><button class="btn btn-bs">+ New Prompt</button></div>
+<div class="badge-row"><span class="badge teal">6 prompts live</span><span class="badge">2 in draft</span><span class="badge">Supported: EN, ZH, Multi</span></div>
+<div class="tbl"><table><tr><th>Scene Code</th><th>Version</th><th>Language</th><th>Model</th><th>Status</th><th>Updated</th><th>Actions</th></tr>
+<tr><td><code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:12px">trip_planner</code></td><td>v2.3</td><td>EN</td><td>gpt-4o</td><td><span class="sp a">Live</span></td><td>May 24</td><td><button class="btn btn-bg" style="padding:4px 10px;min-height:28px;font-size:11px">Edit</button> <button class="btn btn-bg" style="padding:4px 10px;min-height:28px;font-size:11px">History</button></td></tr>
+<tr><td><code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:12px">ocr_menu_explainer</code></td><td>v1.8</td><td>EN→ZH</td><td>gpt-4o-mini</td><td><span class="sp a">Live</span></td><td>May 22</td><td><button class="btn btn-bg" style="padding:4px 10px;min-height:28px;font-size:11px">Edit</button> <button class="btn btn-bg" style="padding:4px 10px;min-height:28px;font-size:11px">History</button></td></tr>
+<tr><td><code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:12px">translate_travel</code></td><td>v3.1</td><td>Multi</td><td>claude-3.5</td><td><span class="sp a">Live</span></td><td>May 25</td><td><button class="btn btn-bg" style="padding:4px 10px;min-height:28px;font-size:11px">Edit</button> <button class="btn btn-bg" style="padding:4px 10px;min-height:28px;font-size:11px">History</button></td></tr>
+<tr><td><code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:12px">city_guide</code></td><td>v1.5</td><td>EN</td><td>gpt-4o</td><td><span class="sp d">Draft</span></td><td>May 20</td><td><button class="btn btn-bg" style="padding:4px 10px;min-height:28px;font-size:11px">Edit</button> <button class="btn btn-bg" style="padding:4px 10px;min-height:28px;font-size:11px">Publish</button></td></tr>
+<tr><td><code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:12px">phrase_generator</code></td><td>v1.2</td><td>EN</td><td>gpt-4o-mini</td><td><span class="sp a">Live</span></td><td>May 18</td><td><button class="btn btn-bg" style="padding:4px 10px;min-height:28px;font-size:11px">Edit</button></td></tr>
+<tr><td><code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:12px">transport_helper</code></td><td>v1.0</td><td>EN</td><td>gpt-4o-mini</td><td><span class="sp d">Draft</span></td><td>May 15</td><td><button class="btn btn-bg" style="padding:4px 10px;min-height:28px;font-size:11px">Edit</button></td></tr></table></div>
+<div class="section-title">Prompt Editor</div>
+<div class="form-row"><label>Scene Code</label><input placeholder="e.g. trip_planner"></div>
+<div class="pair">
+<div class="form-row"><label>Version</label><input placeholder="v2.4"></div>
+<div class="form-row"><label>Target Language</label><select><option>EN (English)</option><option>ZH (Chinese)</option><option>Multi</option></select></div>
+<div class="form-row"><label>Assigned Model</label><select><option>gpt-4o</option><option>claude-3.5-sonnet</option><option selected>gpt-4o-mini</option></select></div>
+</div>
+<div class="form-row"><label>System Prompt</label><textarea rows="4" placeholder="You are a helpful travel assistant for visitors to China…"></textarea></div>
+<div class="form-row"><label>Developer Prompt</label><textarea rows="3" placeholder="Always include Chinese text with pinyin for any phrases…"></textarea></div>
+<div style="display:flex;gap:8px;margin-top:4px"><button class="btn btn-bs">Save Draft</button><button class="btn btn-bg">Publish v2.4</button><button class="btn btn-bg">Run Playground Test</button></div>
+</div>
+
+<!-- ═══ RAG KNOWLEDGE ═══ -->
+<div class="panel" id="pRAG">
+<div class="header"><h2>📚 RAG Knowledge Base</h2><button class="btn btn-bs">+ Upload Content</button></div>
+<div class="stat-grid">
+<div class="stat"><div class="label">Total Chunks</div><div class="value">8,420</div><div class="change">+120 this week</div></div>
+<div class="stat"><div class="label">Cities Indexed</div><div class="value">3</div><div class="change">Beijing, Shanghai, Chengdu</div></div>
+<div class="stat"><div class="label">Embedding Model</div><div class="value" style="font-size:16px">text-3-small</div><div class="change">OpenAI</div></div>
+<div class="stat"><div class="label">Index Health</div><div class="value" style="color:#16a34a">99.2%</div><div class="change">Last rebuild: 2h ago</div></div>
+</div>
+<div class="section-title">Content Sources</div>
+<div class="tbl"><table><tr><th>Category</th><th>Source</th><th>Chunks</th><th>Last Updated</th><th>Status</th><th>Actions</th></tr>
+<tr><td>🏛️ City Guides</td><td>Beijing, Shanghai, Chengdu</td><td>2,340</td><td>May 24</td><td><span class="sp a">Indexed</span></td><td><button class="btn btn-bg" style="padding:4px 10px;min-height:28px;font-size:11px">Rebuild</button></td></tr>
+<tr><td>🍜 Food Dictionary</td><td>Dishes, ingredients, allergens</td><td>1,820</td><td>May 22</td><td><span class="sp a">Indexed</span></td><td><button class="btn btn-bg" style="padding:4px 10px;min-height:28px;font-size:11px">Rebuild</button></td></tr>
+<tr><td>🗣️ Phrase Library</td><td>Travel phrases by scenario</td><td>1,480</td><td>May 25</td><td><span class="sp a">Indexed</span></td><td><button class="btn btn-bg" style="padding:4px 10px;min-height:28px;font-size:11px">Rebuild</button></td></tr>
+<tr><td>📍 Places & POIs</td><td>Attractions, restaurants, hotels</td><td>1,240</td><td>May 20</td><td><span class="sp a">Indexed</span></td><td><button class="btn btn-bg" style="padding:4px 10px;min-height:28px;font-size:11px">Rebuild</button></td></tr>
+<tr><td>❓ FAQ</td><td>Payment, transport, emergency</td><td>680</td><td>May 18</td><td><span class="sp a">Indexed</span></td><td><button class="btn btn-bg" style="padding:4px 10px;min-height:28px;font-size:11px">Rebuild</button></td></tr>
+<tr><td>📷 OCR Dictionary</td><td>Menu items, signs, tickets</td><td>860</td><td>May 15</td><td><span class="sp a">Indexed</span></td><td><button class="btn btn-bg" style="padding:4px 10px;min-height:28px;font-size:11px">Rebuild</button></td></tr></table></div>
+<div class="section-title">Test Retrieval</div>
+<div class="form-row"><label>Query</label><input placeholder="e.g. best peking duck restaurant in Beijing for foreigners"></div>
+<div style="display:flex;gap:8px;margin-bottom:12px"><button class="btn btn-bs">Search</button><button class="btn btn-bg">View Top 5 Chunks</button></div>
+<div class="mini-card"><h3>Rebuild All Indexes</h3><p>This will re-embed all content chunks and rebuild the vector index. Usually takes 2-5 minutes. Content remains available during rebuild.</p><div style="margin-top:10px"><button class="btn btn-bg">🔄 Rebuild Everything</button></div></div>
+</div>
+
+<!-- ═══ USAGE & COST ═══ -->
+<div class="panel" id="pUsage">
+<div class="header"><h2>👥 Usage & Cost Monitor</h2><div style="display:flex;gap:8px"><select style="padding:6px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:12px;font-family:var(--f)"><option>Last 7 days</option><option>Last 30 days</option><option>This month</option></select><button class="btn btn-bg">Export CSV</button></div></div>
+<div class="stat-grid">
+<div class="stat"><div class="label">Total Calls (7d)</div><div class="value">12,847</div><div class="change">↑ 18% vs prev week</div></div>
+<div class="stat"><div class="label">Total Cost (7d)</div><div class="value">$124.50</div><div class="change">↓ 5% vs prev week</div></div>
+<div class="stat"><div class="label">Error Rate</div><div class="value" style="color:#16a34a">0.8%</div><div class="change">103 errors / 12,847 calls</div></div>
+<div class="stat"><div class="label">Fallback Rate</div><div class="value" style="color:#d97706">2.1%</div><div class="change">269 fallbacks</div></div>
+</div>
+<div class="section-title">Cost by Scene (7 days)</div>
+<div class="tbl"><table><tr><th>Scene</th><th>Calls</th><th>Model Used</th><th>Avg Tokens</th><th>Cost</th><th>% of Total</th></tr>
+<tr><td>translate_travel</td><td>5,420</td><td>gpt-4o-mini</td><td>320</td><td>$28.40</td><td>22.8%</td></tr>
+<tr><td>trip_planner</td><td>3,180</td><td>gpt-4o</td><td>1,200</td><td>$52.10</td><td>41.8%</td></tr>
+<tr><td>ocr_menu</td><td>2,340</td><td>gpt-4o-mini</td><td>480</td><td>$18.60</td><td>14.9%</td></tr>
+<tr><td>city_guide</td><td>1,120</td><td>gpt-4o</td><td>800</td><td>$16.20</td><td>13.0%</td></tr>
+<tr><td>phrase_generator</td><td>787</td><td>gpt-4o-mini</td><td>280</td><td>$9.20</td><td>7.4%</td></tr></table></div>
+<div class="section-title">User Satisfaction (7 days)</div>
+<div class="pair">
+<div class="stat"><div class="label">Helpful Responses</div><div class="value">92.4%</div><div class="change">Based on 👍/👎 feedback</div></div>
+<div class="stat"><div class="label">Avg User Rating</div><div class="value">4.6 / 5</div><div class="change">1,847 ratings collected</div></div>
+</div>
+<div class="section-title">Top Error Types</div>
+<div class="tbl"><table><tr><th>Error Type</th><th>Count</th><th>Model</th><th>Action</th></tr>
+<tr><td>Timeout (>10s)</td><td>42</td><td>gpt-4o</td><td>Increase timeout to 15s</td></tr>
+<tr><td>Rate Limit</td><td>31</td><td>claude-3.5</td><td>Add retry with backoff</td></tr>
+<tr><td>Content Filter</td><td>18</td><td>gpt-4o</td><td>Adjust prompt wording</td></tr>
+<tr><td>Token Overflow</td><td>12</td><td>gpt-4o</td><td>Reduce context length</td></tr></table></div>
+</div>
+
+</div>
+</div>
+
+<script>
+function switchPanel(btn,panelId){
+  document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('on')});
+  btn.classList.add('on');
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('on')});
+  var el=document.getElementById(panelId);
+  if(el)el.classList.add('on');
+}
+</script>
+</body>
+</html>

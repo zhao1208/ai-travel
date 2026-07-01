@@ -1,0 +1,58 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  deploy:
+    name: FTP Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Deploy via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: ${{ secrets.FTP_SERVER_DIR }}
+          # 排除不需要上传的文件/目录
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/.github/**
+            **/node_modules/**
+            **/.workbuddy/**
+            **/overview.md
+            **/*.log
+            **/scripts/**
+            **/*-remote.py
+            **/*.sh
+            package.json
+            package-lock.json
+            server.js
+            test-api.js
+            test-express.js
+            .env.example
+            OAUTH_*.md
+            standalone.html
+            admin-dashboard-fix.html
+            china-travel-companion-4.html
+
+      - name: Verify Deployment
+        if: ${{ secrets.SITE_URL != '' }}
+        run: |
+          echo "🔍 Verifying deployment..."
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.SITE_URL }}" || echo "000")
+          if [ "$STATUS" = "200" ]; then
+            echo "✅ Site is up (HTTP $STATUS)"
+          else
+            echo "⚠️  Site returned HTTP $STATUS (may need a moment to propagate)"
+          fi

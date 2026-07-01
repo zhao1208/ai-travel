@@ -1,0 +1,4331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0d9488">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="description" content="AI Travel Assistant for China - AI旅行助手，为中国旅行提供AI智能助手">
+  <title>TravelMate AI - 旅行AI助手</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✈</text></svg>">
+  <style>
+<style>
+    body {
+      margin: 0;
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC', sans-serif;
+      background: #0f172a;
+    }
+    #app {
+      min-height: 100vh;
+    }
+    .loading-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+    .loading-screen.fade-out {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .loading-logo {
+      width: 96px;
+      height: 96px;
+      border-radius: 24px;
+      background: linear-gradient(135deg, #14b8a6, #0d9488);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      color: white;
+      animation: pulse 1.5s ease infinite, float 3s ease-in-out infinite;
+      box-shadow: 0 12px 40px rgba(20, 184, 166, 0.4);
+    }
+    @keyframes pulse {
+      0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 12px 40px rgba(20, 184, 166, 0.4);
+      }
+      50% {
+        transform: scale(1.08);
+        box-shadow: 0 16px 48px rgba(20, 184, 166, 0.5);
+      }
+    }
+    @keyframes float {
+      0%, 100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-10px);
+      }
+    }
+    .loading-text {
+      margin-top: 24px;
+      font-size: 18px;
+      font-weight: 600;
+      color: #94a3b8;
+      letter-spacing: 0.02em;
+    }
+    .loading-dots {
+      display: flex;
+      gap: 6px;
+      margin-top: 16px;
+    }
+    .loading-dots span {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #14b8a6;
+      animation: dotPulse 1.4s infinite ease-in-out;
+    }
+    .loading-dots span:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+    .loading-dots span:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+    @keyframes dotPulse {
+      0%, 80%, 100% {
+        transform: scale(0.6);
+        opacity: 0.5;
+      }
+      40% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+  
+/* ===== AI Travel Assistant - Modern Redesign ===== */
+
+/* --- Google Fonts --- */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* --- Reset & Base --- */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  /* Primary Teal Palette */
+  --teal-50: #f0fdfa;
+  --teal-100: #ccfbf1;
+  --teal-200: #99f6e4;
+  --teal-300: #5eead4;
+  --teal-400: #2dd4bf;
+  --teal-500: #14b8a6;
+  --teal-600: #0d9488;
+  --teal-700: #0f766e;
+  --teal-800: #115e59;
+  --teal-900: #134e4a;
+
+  /* Accent Colors */
+  --coral: #f97316;
+  --coral-light: #fed7aa;
+  --amber: #f59e0b;
+  --violet: #8b5cf6;
+  --rose: #f43f5e;
+
+  /* Neutrals */
+  --slate-50: #f8fafc;
+  --slate-100: #f1f5f9;
+  --slate-200: #e2e8f0;
+  --slate-300: #cbd5e1;
+  --slate-400: #94a3b8;
+  --slate-500: #64748b;
+  --slate-600: #475569;
+  --slate-700: #334155;
+  --slate-800: #1e293b;
+  --slate-900: #0f172a;
+
+  /* Semantic Colors */
+  --bg: var(--slate-50);
+  --bg-white: #ffffff;
+  --text: var(--slate-800);
+  --text-secondary: var(--slate-600);
+  --text-muted: var(--slate-400);
+  --border: var(--slate-200);
+  --accent: var(--teal-600);
+  --accent-bg: var(--teal-50);
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.06), 0 2px 4px -1px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.04);
+  --shadow-xl: 0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 10px 10px -5px rgba(15, 23, 42, 0.04);
+  --shadow-2xl: 0 25px 50px -12px rgba(15, 23, 42, 0.2);
+  --shadow-glow: 0 0 20px rgba(20, 184, 166, 0.15);
+
+  /* Border Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-2xl: 32px;
+  --radius-full: 9999px;
+
+  /* Layout */
+  --sidebar-w: 260px;
+  --header-h: 64px;
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+input, textarea, select {
+  font: inherit;
+  color: inherit;
+  border: none;
+  outline: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+ul, ol {
+  list-style: none;
+}
+
+code {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* --- Utilities --- */
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.gap-4 { gap: 4px; }
+.gap-8 { gap: 8px; }
+.gap-12 { gap: 12px; }
+.gap-16 { gap: 16px; }
+.gap-20 { gap: 20px; }
+.gap-24 { gap: 24px; }
+
+.text-center { text-align: center; }
+.text-primary { color: var(--accent); }
+.text-muted { color: var(--text-muted); }
+.text-secondary { color: var(--text-secondary); }
+.text-white { color: white; }
+
+.font-bold { font-weight: 700; }
+.font-medium { font-weight: 500; }
+.font-semibold { font-weight: 600; }
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ===========================
+   APP SHELL & LAYOUT
+   =========================== */
+
+#app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+/* --- Sidebar --- */
+.sidebar {
+  width: var(--sidebar-w);
+  background: linear-gradient(180deg, var(--slate-900) 0%, var(--slate-800) 100%);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 100;
+  transition: transform var(--transition);
+  overflow: hidden;
+}
+
+.sidebar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    radial-gradient(ellipse at 20% 20%, rgba(20, 184, 166, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.sidebar-brand {
+  padding: 24px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+}
+
+.sidebar-brand .brand-icon {
+  width: 42px;
+  height: 42px;
+  background: linear-gradient(135deg, var(--teal-500), var(--teal-600));
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  color: white;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3);
+}
+
+.sidebar-brand h1 {
+  font-size: 18px;
+  font-weight: 700;
+  color: white;
+  letter-spacing: -0.02em;
+}
+
+.sidebar-brand .brand-sub {
+  font-size: 12px;
+  color: var(--slate-400);
+  font-weight: 400;
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 16px 12px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+}
+
+.sidebar-nav::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+.nav-section-label {
+  padding: 8px 12px 6px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--slate-500);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--slate-300);
+  transition: all var(--transition);
+  cursor: pointer;
+  margin-bottom: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 0;
+  background: var(--teal-500);
+  border-radius: 0 2px 2px 0;
+  transition: height var(--transition);
+}
+
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+}
+
+.nav-item.active {
+  background: linear-gradient(90deg, rgba(20, 184, 166, 0.15) 0%, rgba(20, 184, 166, 0.05) 100%);
+  color: var(--teal-400);
+  font-weight: 600;
+}
+
+.nav-item.active::before {
+  height: 24px;
+}
+
+.nav-item .nav-icon {
+  font-size: 20px;
+  width: 24px;
+  text-align: center;
+  flex-shrink: 0;
+  filter: grayscale(0);
+  transition: transform var(--transition);
+}
+
+.nav-item:hover .nav-icon {
+  transform: scale(1.1);
+}
+
+.sidebar-footer {
+  padding: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  position: relative;
+}
+
+.lang-switch-desktop {
+  display: flex;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-md);
+  padding: 4px;
+  gap: 4px;
+  backdrop-filter: blur(8px);
+}
+
+.lang-switch-mobile {
+  display: none;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+  gap: 3px;
+  margin-right: 8px;
+}
+
+.lang-switch-desktop button {
+  flex: 1;
+  padding: 8px 0;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  transition: all var(--transition);
+  color: var(--slate-400);
+}
+
+.lang-switch-mobile button {
+  display: none;
+}
+
+.lang-switch-mobile button.active {
+  display: inline-flex;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--teal-600);
+  color: white;
+}
+
+.lang-switch-mobile button:not(.active) {
+  display: inline-flex;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  background: transparent;
+  color: var(--slate-400);
+}
+
+.lang-switch-desktop button.active {
+  background: var(--teal-600);
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+
+/* --- Main Content --- */
+.main-content {
+  flex: 1;
+  margin-left: var(--sidebar-w);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.content-header {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px;
+  height: var(--header-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.content-header h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+.content-header .header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.content-body {
+  padding: 32px;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* --- Page Transitions --- */
+.page {
+  animation: pageIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes pageIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===========================
+   CARDS & COMPONENTS
+   =========================== */
+
+.card {
+  background: var(--bg-white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: all var(--transition);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+.card-body {
+  padding: 24px;
+}
+
+.card-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-header h3 {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* Glass Card Effect */
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* ===========================
+   SEARCH BAR
+   =========================== */
+
+.search-bar {
+  position: relative;
+  max-width: 640px;
+}
+
+.search-bar input {
+  width: 100%;
+  height: 52px;
+  background: var(--bg-white);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 0 52px 0 20px;
+  font-size: 15px;
+  transition: all var(--transition);
+  box-shadow: var(--shadow-xs);
+}
+
+.search-bar input:focus {
+  border-color: var(--teal-500);
+  box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.1), var(--shadow-md);
+  background: white;
+}
+
+.search-bar .search-icon {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 20px;
+  color: var(--text-muted);
+  transition: color var(--transition);
+}
+
+.search-bar input:focus + .search-icon {
+  color: var(--teal-600);
+}
+
+/* ===========================
+   QUICK ACTIONS
+   =========================== */
+
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.action-card {
+  background: var(--bg-white);
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  cursor: pointer;
+  transition: all var(--transition);
+  border: 2px solid transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+.action-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--teal-500), var(--teal-600));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--transition);
+}
+
+.action-card:hover {
+  box-shadow: var(--shadow-lg);
+  border-color: var(--teal-100);
+  transform: translateY(-4px);
+}
+
+.action-card:hover::before {
+  transform: scaleX(1);
+}
+
+.action-card .action-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  flex-shrink: 0;
+  transition: transform var(--transition);
+}
+
+.action-card:hover .action-icon {
+  transform: scale(1.1) rotate(-5deg);
+}
+
+.action-icon.teal { background: linear-gradient(135deg, var(--teal-100), var(--teal-50)); }
+.action-icon.coral { background: linear-gradient(135deg, #fee2e2, #fef2f2); }
+.action-icon.amber { background: linear-gradient(135deg, #fef3c7, #fffbeb); }
+.action-icon.violet { background: linear-gradient(135deg, #ede9fe, #f5f3ff); }
+
+.action-card .action-text .action-title {
+  font-weight: 700;
+  font-size: 16px;
+  margin-bottom: 4px;
+  color: var(--text);
+}
+
+.action-card .action-text .action-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* ===========================
+   CITY CARDS
+   =========================== */
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.section-header h2 {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.see-all {
+  font-size: 14px;
+  color: var(--teal-600);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  background: var(--teal-50);
+  transition: all var(--transition);
+}
+
+.see-all:hover {
+  background: var(--teal-100);
+  transform: translateX(4px);
+}
+
+.city-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+.city-card {
+  background: var(--bg-white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all var(--transition);
+  border: 2px solid transparent;
+}
+
+.city-card:hover {
+  box-shadow: var(--shadow-2xl);
+  transform: translateY(-8px) scale(1.02);
+  border-color: var(--teal-200);
+}
+
+.city-card .city-cover {
+  height: 180px;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+
+.city-card .city-cover::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100px;
+  background: linear-gradient(transparent, rgba(15, 23, 42, 0.6));
+}
+
+.city-card .city-badge {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  border-radius: var(--radius-full);
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--teal-700);
+  z-index: 1;
+  box-shadow: var(--shadow-sm);
+}
+
+.city-card .city-name {
+  position: absolute;
+  bottom: 16px;
+  left: 20px;
+  color: white;
+  font-size: 24px;
+  font-weight: 800;
+  z-index: 1;
+  letter-spacing: -0.02em;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.city-card .city-info {
+  padding: 20px;
+}
+
+.city-card .city-desc {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.city-card .city-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.city-card .city-tag {
+  font-size: 11px;
+  background: var(--slate-100);
+  color: var(--slate-600);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-weight: 600;
+}
+
+/* ===========================
+   SUGGESTIONS
+   =========================== */
+
+.suggestions-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.suggestion-card {
+  background: var(--bg-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  transition: all var(--transition);
+  border: 2px solid transparent;
+}
+
+.suggestion-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateX(8px);
+  border-color: var(--teal-100);
+}
+
+.suggestion-card .sug-icon {
+  font-size: 32px;
+  transition: transform var(--transition);
+}
+
+.suggestion-card:hover .sug-icon {
+  transform: scale(1.2) rotate(10deg);
+}
+
+.suggestion-card .sug-text {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* ===========================
+   CHAT PAGE
+   =========================== */
+
+.chat-layout {
+  display: flex;
+  height: calc(100vh - var(--header-h));
+  margin: -32px;
+}
+
+.chat-sidebar {
+  width: 300px;
+  background: var(--bg-white);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-sm);
+}
+
+.chat-sidebar-header {
+  padding: 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.chat-sidebar-header h3 {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.new-chat-btn {
+  padding: 8px 16px;
+  background: linear-gradient(135deg, var(--teal-500), var(--teal-600));
+  color: white;
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 600;
+  transition: all var(--transition);
+  box-shadow: 0 2px 8px rgba(20, 184, 166, 0.3);
+}
+
+.new-chat-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(20, 184, 166, 0.4);
+}
+
+.chat-history {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+.chat-history::-webkit-scrollbar {
+  width: 4px;
+}
+
+.chat-history::-webkit-scrollbar-thumb {
+  background: var(--slate-200);
+  border-radius: 2px;
+}
+
+.chat-history-item {
+  padding: 14px 16px;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-secondary);
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.chat-history-item:hover {
+  background: var(--slate-100);
+  color: var(--text);
+}
+
+.chat-history-item.active {
+  background: linear-gradient(135deg, var(--teal-50), var(--slate-50));
+  color: var(--teal-700);
+  font-weight: 600;
+}
+
+.chat-history-item .ch-time {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.chat-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.chat-msg {
+  display: flex;
+  gap: 14px;
+  max-width: 80%;
+  animation: msgIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes msgIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.chat-msg.user {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+.chat-msg.assistant {
+  align-self: flex-start;
+}
+
+.chat-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.chat-msg.user .chat-avatar {
+  background: linear-gradient(135deg, var(--teal-500), var(--teal-600));
+}
+
+.chat-msg.assistant .chat-avatar {
+  background: linear-gradient(135deg, var(--slate-700), var(--slate-800));
+}
+
+.chat-bubble {
+  padding: 16px 20px;
+  border-radius: var(--radius-xl);
+  font-size: 15px;
+  line-height: 1.7;
+  word-break: break-word;
+}
+
+.chat-msg.user .chat-bubble {
+  background: linear-gradient(135deg, var(--teal-600), var(--teal-700));
+  color: white;
+  border-bottom-right-radius: 6px;
+  box-shadow: var(--shadow-md);
+}
+
+.chat-msg.assistant .chat-bubble {
+  background: var(--bg-white);
+  border-bottom-left-radius: 6px;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border);
+}
+
+/* Chat Input Bar */
+.chat-input-bar {
+  padding: 20px 32px 24px;
+  background: var(--bg-white);
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.04);
+}
+
+.chat-input-bar textarea {
+  flex: 1;
+  min-height: 52px;
+  max-height: 160px;
+  padding: 14px 20px;
+  background: var(--slate-50);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-xl);
+  resize: none;
+  font-size: 15px;
+  line-height: 1.5;
+  transition: all var(--transition);
+}
+
+.chat-input-bar textarea:focus {
+  border-color: var(--teal-500);
+  background: white;
+  box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.1);
+}
+
+.chat-input-bar .send-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--teal-500), var(--teal-600));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+  transition: all var(--transition);
+  box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3);
+}
+
+.chat-input-bar .send-btn:hover {
+  transform: scale(1.1) rotate(10deg);
+  box-shadow: 0 6px 20px rgba(20, 184, 166, 0.4);
+}
+
+/* Suggestion Chips */
+.suggestion-chips {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 12px 0;
+}
+
+.suggestion-chip {
+  padding: 10px 18px;
+  border-radius: var(--radius-full);
+  background: var(--bg-white);
+  border: 2px solid var(--border);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.suggestion-chip:hover {
+  background: var(--teal-50);
+  border-color: var(--teal-300);
+  color: var(--teal-700);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Typing Indicator */
+.typing-indicator {
+  display: flex;
+  gap: 6px;
+  padding: 8px 0;
+}
+
+.typing-indicator span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--teal-400);
+  animation: typing 1.4s infinite ease-in-out;
+}
+
+.typing-indicator span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typing {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  30% {
+    transform: translateY(-8px);
+    opacity: 1;
+  }
+}
+
+/* ===========================
+   TRANSLATE PAGE
+   =========================== */
+
+.translate-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  height: calc(100vh - var(--header-h) - 64px);
+}
+
+.translate-panel {
+  background: var(--bg-white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.translate-panel .lang-bar {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--slate-50);
+}
+
+.translate-panel .lang-bar select {
+  flex: 1;
+  padding: 10px 14px;
+  background: var(--bg-white);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-lg);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.translate-panel .lang-bar select:focus {
+  border-color: var(--teal-500);
+}
+
+.swap-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--teal-100);
+  color: var(--teal-700);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+  transition: all var(--transition);
+  box-shadow: var(--shadow-sm);
+}
+
+.swap-btn:hover {
+  background: var(--teal-500);
+  color: white;
+  transform: rotate(180deg);
+}
+
+.translate-panel .panel-body {
+  flex: 1;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.translate-panel textarea {
+  width: 100%;
+  flex: 1;
+  min-height: 200px;
+  font-size: 20px;
+  line-height: 1.7;
+  resize: none;
+  font-family: 'Outfit', sans-serif;
+}
+
+.translate-panel textarea::placeholder {
+  color: var(--text-muted);
+}
+
+.result-text {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.5;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+
+.pinyin-text {
+  font-size: 16px;
+  color: var(--teal-600);
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+
+.translate-actions {
+  display: flex;
+  gap: 10px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  margin-top: auto;
+  flex-wrap: wrap;
+}
+
+.translate-actions button {
+  padding: 10px 18px;
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--slate-100);
+  color: var(--text-secondary);
+  transition: all var(--transition);
+}
+
+.translate-actions button:hover {
+  background: var(--teal-100);
+  color: var(--teal-700);
+  transform: translateY(-2px);
+}
+
+.translate-btn {
+  width: 100%;
+  height: 52px;
+  background: linear-gradient(135deg, var(--teal-500), var(--teal-600));
+  color: white;
+  border-radius: var(--radius-xl);
+  font-size: 16px;
+  font-weight: 700;
+  margin-top: 16px;
+  transition: all var(--transition);
+  box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3);
+}
+
+.translate-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(20, 184, 166, 0.4);
+}
+
+/* Full Screen Translation */
+.fullscreen-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: linear-gradient(135deg, var(--slate-900), var(--slate-800));
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.fullscreen-overlay .fs-text {
+  font-size: 56px;
+  font-weight: 800;
+  text-align: center;
+  line-height: 1.3;
+  margin-bottom: 20px;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, white, var(--teal-200));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.fullscreen-overlay .fs-pinyin {
+  font-size: 26px;
+  color: var(--teal-400);
+  margin-bottom: 40px;
+  font-weight: 400;
+}
+
+.fullscreen-overlay .fs-close {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  color: white;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition);
+}
+
+.fullscreen-overlay .fs-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: rotate(90deg);
+}
+
+/* ===========================
+   CITY DETAIL PAGE
+   =========================== */
+
+.city-hero {
+  height: 300px;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  margin-bottom: 28px;
+}
+
+.city-tabs-bar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 24px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scrollbar-width: none;
+}
+
+.city-tabs-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.city-tab-btn {
+  padding: 10px 22px;
+  border-radius: var(--radius-full);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-white);
+  border: 2px solid var(--border);
+  white-space: nowrap;
+  transition: all var(--transition);
+  cursor: pointer;
+  box-shadow: var(--shadow-xs);
+}
+
+.city-tab-btn:hover {
+  border-color: var(--teal-300);
+  color: var(--teal-700);
+  transform: translateY(-2px);
+}
+
+.city-tab-btn.active {
+  background: linear-gradient(135deg, var(--teal-500), var(--teal-600));
+  color: white;
+  border-color: var(--teal-500);
+  box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3);
+}
+
+.city-hero::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 150px;
+  background: linear-gradient(transparent, rgba(15, 23, 42, 0.7));
+}
+
+.city-hero-content {
+  position: absolute;
+  bottom: 32px;
+  left: 40px;
+  right: 40px;
+  z-index: 1;
+  color: white;
+}
+
+.city-hero-content h1 {
+  font-size: 42px;
+  font-weight: 800;
+  margin-bottom: 8px;
+  letter-spacing: -0.03em;
+}
+
+.city-hero-content p {
+  font-size: 18px;
+  opacity: 0.9;
+}
+
+.city-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 28px;
+}
+
+.city-tab {
+  padding: 14px 24px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-muted);
+  border-bottom: 3px solid transparent;
+  transition: all var(--transition);
+  cursor: pointer;
+}
+
+.city-tab:hover {
+  color: var(--text);
+}
+
+.city-tab.active {
+  color: var(--teal-600);
+  border-bottom-color: var(--teal-500);
+}
+
+.city-detail-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 28px;
+}
+
+.info-card {
+  background: var(--bg-white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  padding: 24px;
+  margin-bottom: 20px;
+  border: 1px solid var(--border);
+}
+
+.info-card h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.info-card p {
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.place-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.place-card {
+  background: var(--bg-white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  padding: 20px;
+  display: flex;
+  gap: 16px;
+  transition: all var(--transition);
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+
+.place-card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-4px);
+  border-color: var(--teal-100);
+}
+
+.place-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, var(--teal-100), var(--teal-50));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  flex-shrink: 0;
+}
+
+.place-info {
+  flex: 1;
+}
+
+.place-info h4 {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.place-info .place-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.place-info .place-meta {
+  font-size: 12px;
+  color: var(--teal-600);
+  font-weight: 600;
+}
+
+/* ===========================
+   PHRASES PAGE
+   =========================== */
+
+.phrases-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 28px;
+}
+
+.phrase-cats-sidebar {
+  background: var(--bg-white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  padding: 12px;
+  height: fit-content;
+  position: sticky;
+  top: calc(var(--header-h) + 32px);
+}
+
+.phrase-cat-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius-lg);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition);
+  margin-bottom: 4px;
+}
+
+.phrase-cat-item:hover {
+  background: var(--slate-100);
+  color: var(--text);
+}
+
+.phrase-cat-item.active {
+  background: linear-gradient(135deg, var(--teal-500), var(--teal-600));
+  color: white;
+  box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3);
+}
+
+.phrase-cat-item .cat-icon {
+  font-size: 20px;
+}
+
+.phrase-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.phrase-card {
+  background: var(--bg-white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  padding: 24px;
+  cursor: pointer;
+  transition: all var(--transition);
+  border: 2px solid transparent;
+}
+
+.phrase-card:hover {
+  box-shadow: var(--shadow-lg);
+  border-color: var(--teal-200);
+  transform: translateY(-4px);
+}
+
+.phrase-card .phrase-en {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.phrase-card .phrase-zh {
+  font-size: 32px;
+  font-weight: 800;
+  margin-bottom: 6px;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, var(--slate-800), var(--slate-600));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.phrase-card .phrase-pinyin {
+  font-size: 15px;
+  color: var(--teal-600);
+  font-weight: 500;
+  font-style: italic;
+}
+
+.phrase-card .phrase-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.phrase-card .phrase-actions button {
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--slate-100);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all var(--transition);
+}
+
+.phrase-card .phrase-actions button:hover {
+  background: var(--teal-100);
+  color: var(--teal-700);
+  transform: scale(1.05);
+}
+
+/* ===========================
+   PROFILE PAGE
+   =========================== */
+
+.profile-layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 28px;
+}
+
+.profile-sidebar {
+  text-align: center;
+  background: var(--bg-white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  padding: 32px 24px;
+  height: fit-content;
+  position: sticky;
+  top: calc(var(--header-h) + 32px);
+}
+
+.profile-avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--teal-500), var(--teal-600));
+  margin: 0 auto 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  font-weight: 800;
+  color: white;
+  box-shadow: 0 8px 24px rgba(20, 184, 166, 0.3);
+}
+
+.profile-sidebar h2 {
+  font-size: 24px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.profile-sidebar p {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.profile-card {
+  background: var(--bg-white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 20px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.profile-item {
+  display: flex;
+  align-items: center;
+  padding: 18px 24px;
+  gap: 16px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.profile-item:last-child {
+  border-bottom: none;
+}
+
+.profile-item:hover {
+  background: var(--slate-50);
+}
+
+.profile-item .item-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-lg);
+  background: var(--teal-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+.profile-item .item-info {
+  flex: 1;
+}
+
+.profile-item .item-info h4 {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.profile-item .item-info p {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.profile-item .item-arrow {
+  color: var(--text-muted);
+  font-size: 16px;
+}
+
+.usage-bar {
+  height: 8px;
+  background: var(--slate-100);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin-top: 10px;
+}
+
+.usage-bar .usage-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--teal-500), var(--teal-600));
+  border-radius: var(--radius-full);
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===========================
+   ADMIN PAGE
+   =========================== */
+
+.admin-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 28px;
+}
+
+.admin-sidebar {
+  background: var(--bg-white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  padding: 12px;
+  height: fit-content;
+  position: sticky;
+  top: calc(var(--header-h) + 32px);
+}
+
+.admin-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius-lg);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition);
+  margin-bottom: 4px;
+}
+
+.admin-nav-item:hover {
+  background: var(--slate-100);
+  color: var(--text);
+}
+
+.admin-nav-item.active {
+  background: linear-gradient(135deg, var(--teal-500), var(--teal-600));
+  color: white;
+  box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3);
+}
+
+.admin-main {
+  min-width: 0;
+}
+
+/* Admin Table */
+.admin-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--bg-white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.admin-table th {
+  padding: 16px 20px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: var(--slate-50);
+  border-bottom: 2px solid var(--border);
+}
+
+.admin-table td {
+  padding: 16px 20px;
+  font-size: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.admin-table tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-table tr:hover td {
+  background: var(--slate-50);
+}
+
+/* Status Badge */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.status-badge.enabled {
+  background: linear-gradient(135deg, #dcfce7, #f0fdf4);
+  color: #16a34a;
+}
+
+.status-badge.disabled {
+  background: linear-gradient(135deg, #fef3c7, #fffbeb);
+  color: #d97706;
+}
+
+/* Admin Form */
+.admin-form {
+  background: var(--bg-white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  padding: 32px;
+  border: 1px solid var(--border);
+}
+
+.admin-form h3 {
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid var(--border);
+}
+
+.form-group {
+  margin-bottom: 24px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 14px 18px;
+  background: var(--slate-50);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-lg);
+  font-size: 15px;
+  transition: all var(--transition);
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: var(--teal-500);
+  background: white;
+  box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.1);
+}
+
+.form-group textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.form-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+/* ===========================
+   BUTTONS
+   =========================== */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: var(--radius-lg);
+  font-size: 14px;
+  font-weight: 700;
+  transition: all var(--transition);
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--teal-500), var(--teal-600));
+  color: white;
+  box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(20, 184, 166, 0.4);
+}
+
+.btn-secondary {
+  background: var(--slate-100);
+  color: var(--text-secondary);
+  border: 2px solid var(--border);
+}
+
+.btn-secondary:hover {
+  background: var(--slate-200);
+  border-color: var(--slate-300);
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #fee2e2, #fef2f2);
+  color: #dc2626;
+  border: 2px solid #fecaca;
+}
+
+.btn-danger:hover {
+  background: #dc2626;
+  color: white;
+  border-color: #dc2626;
+}
+
+.btn-sm {
+  padding: 8px 16px;
+  font-size: 13px;
+}
+
+.btn-group {
+  display: flex;
+  gap: 10px;
+}
+
+/* ===========================
+   TOGGLE SWITCH
+   =========================== */
+
+.toggle {
+  position: relative;
+  width: 48px;
+  height: 26px;
+  cursor: pointer;
+}
+
+.toggle input {
+  display: none;
+}
+
+.toggle .slider {
+  position: absolute;
+  inset: 0;
+  background: var(--slate-300);
+  border-radius: 26px;
+  transition: all var(--transition);
+}
+
+.toggle .slider::before {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  left: 3px;
+  top: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: transform var(--transition);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.toggle input:checked + .slider {
+  background: linear-gradient(135deg, var(--teal-500), var(--teal-600));
+}
+
+.toggle input:checked + .slider::before {
+  transform: translateX(22px);
+}
+
+/* ===========================
+   TOAST
+   =========================== */
+
+.toast {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  background: linear-gradient(135deg, var(--slate-800), var(--slate-900));
+  color: white;
+  padding: 14px 28px;
+  border-radius: var(--radius-xl);
+  font-size: 14px;
+  font-weight: 600;
+  z-index: 300;
+  animation: toastIn 0.4s cubic-bezier(0.4, 0, 0.2, 1), toastOut 0.3s ease 1.7s forwards;
+  box-shadow: var(--shadow-2xl);
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateX(32px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes toastOut {
+  to {
+    opacity: 0;
+    transform: translateX(32px);
+  }
+}
+
+/* ===========================
+   EMPTY STATE
+   =========================== */
+
+.empty-state {
+  text-align: center;
+  padding: 80px 32px;
+  color: var(--text-muted);
+}
+
+.empty-state .empty-icon {
+  font-size: 72px;
+  margin-bottom: 24px;
+  opacity: 0.6;
+}
+
+.empty-state h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.empty-state p {
+  font-size: 15px;
+  max-width: 360px;
+  margin: 0 auto;
+}
+
+/* ===========================
+   LOADING SCREEN
+   =========================== */
+
+.loading-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--slate-900), var(--slate-800));
+  transition: opacity 0.5s, visibility 0.5s;
+}
+
+.loading-screen.fade-out {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.loading-logo {
+  width: 88px;
+  height: 88px;
+  border-radius: var(--radius-xl);
+  background: linear-gradient(135deg, var(--teal-500), var(--teal-600));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 44px;
+  color: white;
+  animation: pulse 1.5s ease infinite, float 3s ease-in-out infinite;
+  box-shadow: 0 12px 32px rgba(20, 184, 166, 0.4);
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 12px 32px rgba(20, 184, 166, 0.4);
+  }
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 16px 40px rgba(20, 184, 166, 0.5);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.loading-text {
+  margin-top: 20px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--slate-400);
+  letter-spacing: 0.02em;
+}
+
+/* ===========================
+   MOBILE RESPONSIVE (<960px)
+   =========================== */
+
+@media (max-width: 959px) {
+  .sidebar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: auto;
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    border-right: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .sidebar-brand,
+  .sidebar-footer,
+  .nav-section-label {
+    display: none;
+  }
+
+  .sidebar-nav {
+    display: flex;
+    padding: 8px;
+    width: 100%;
+    justify-content: space-around;
+    overflow-x: auto;
+  }
+
+  .lang-switch-desktop {
+    display: none;
+  }
+
+  .lang-switch-mobile {
+    display: flex;
+  }
+
+  .nav-item {
+    flex-direction: column;
+    padding: 10px 8px;
+    font-size: 10px;
+    gap: 4px;
+    min-width: 64px;
+  }
+
+  .nav-item[data-mobile="false"] {
+    display: none;
+  }
+
+  .nav-item .nav-icon {
+    font-size: 24px;
+  }
+
+  .nav-item::before {
+    display: none;
+  }
+
+  .main-content {
+    margin-left: 0;
+    padding-bottom: 88px;
+  }
+
+  .content-body {
+    padding: 24px 20px;
+  }
+
+  .quick-actions {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .action-card {
+    flex-direction: column;
+    padding: 20px;
+    text-align: center;
+    align-items: center;
+  }
+
+  .city-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .suggestions-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .translate-layout {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .city-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .place-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .phrases-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .phrase-cats-sidebar {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 8px;
+    border-radius: var(--radius-lg);
+    position: static;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .phrase-cats-sidebar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .phrase-cat-item {
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-bottom: 0;
+  }
+
+  .phrase-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-sidebar {
+    position: static;
+  }
+
+  .admin-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-sidebar {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 8px;
+    position: static;
+    border-radius: var(--radius-lg);
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .admin-sidebar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .admin-nav-item {
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-bottom: 0;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .chat-sidebar {
+    display: none;
+  }
+
+  .chat-messages {
+    padding: 20px;
+  }
+
+  .chat-input-bar {
+    padding: 16px 20px;
+  }
+
+  .content-header {
+    padding: 0 20px;
+  }
+
+  .chat-msg {
+    max-width: 90%;
+  }
+}
+
+/* ===========================
+   SMALL MOBILE (<640px)
+   =========================== */
+
+@media (max-width: 639px) {
+  .quick-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .action-card {
+    flex-direction: row;
+    text-align: left;
+  }
+
+  .admin-table {
+    font-size: 12px;
+  }
+
+  .admin-table th,
+  .admin-table td {
+    padding: 12px 10px;
+  }
+
+  .city-hero-content h1 {
+    font-size: 32px;
+  }
+
+  .section-header h2 {
+    font-size: 18px;
+  }
+
+  .fullscreen-overlay .fs-text {
+    font-size: 40px;
+  }
+}
+
+/* ===========================
+   AUTH PAGE
+   =========================== */
+
+.auth-container {
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+.auth-card {
+  background: var(--bg-white);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-2xl);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.auth-header {
+  text-align: center;
+  padding: 40px 32px 32px;
+  background: linear-gradient(135deg, var(--slate-50), white);
+  border-bottom: 1px solid var(--border);
+}
+
+.auth-header .auth-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: var(--radius-xl);
+  background: linear-gradient(135deg, var(--teal-500), var(--teal-600));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  color: white;
+  margin: 0 auto 20px;
+  box-shadow: 0 8px 24px rgba(20, 184, 166, 0.3);
+}
+
+.auth-header h2 {
+  font-size: 26px;
+  font-weight: 800;
+  margin-bottom: 6px;
+  letter-spacing: -0.02em;
+}
+
+.auth-header p {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.auth-body {
+  padding: 32px;
+}
+
+.social-login {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.social-btn {
+  flex: 1;
+  padding: 14px;
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--border);
+  background: var(--bg-white);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.social-btn:hover {
+  border-color: var(--teal-300);
+  background: var(--teal-50);
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.auth-divider span {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.auth-switch {
+  text-align: center;
+  margin-top: 24px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.auth-switch button {
+  color: var(--teal-600);
+  font-weight: 700;
+  margin-left: 4px;
+}
+
+.auth-switch button:hover {
+  text-decoration: underline;
+}
+
+  </style>
+</head>
+<body>
+  <div class="loading-screen" id="loadingScreen">
+    <div class="loading-logo">✈</div>
+    <div class="loading-text">TravelMate AI</div>
+    <div class="loading-dots">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+  </div>
+
+  <div id="app"></div>
+
+  <script>
+// ===== Internationalization System =====
+const I18N = {
+  en: {
+    // Navigation
+    nav_home: 'Home',
+    nav_chat: 'AI Chat',
+    nav_translate: 'Translate',
+    nav_phrases: 'Phrases',
+    nav_profile: 'Profile',
+    app_name: 'TravelMate AI',
+
+    // Home
+    home_search: 'Ask me anything about China travel...',
+    home_quick_translate: 'Quick Translate',
+    home_quick_translate_desc: 'Text & voice translation',
+    home_ai_chat: 'AI Assistant',
+    home_ai_chat_desc: 'Trip planning & tips',
+    home_camera: 'Camera Translate',
+    home_camera_desc: 'Scan & translate signs',
+    home_phrases: 'Survival Phrases',
+    home_phrases_desc: 'Essential Chinese phrases',
+    home_featured: 'Featured Cities',
+    home_see_all: 'See All',
+    home_suggestions: 'Suggested for You',
+    home_sug_1: 'Best street food in Shanghai',
+    home_sug_2: 'How to use WeChat Pay',
+    home_sug_3: 'Beijing Forbidden City guide',
+    home_sug_4: 'Chinese tea culture basics',
+
+    // Chat
+    chat_title: 'AI Assistant',
+    chat_placeholder: 'Type your question...',
+    chat_welcome: "Hi! I'm your AI travel assistant. I can help you plan trips, translate phrases, find local food, and navigate China. What would you like to know?",
+    chat_suggest_1: 'Plan a 3-day trip to Shanghai',
+    chat_suggest_2: 'Best local restaurants nearby',
+    chat_suggest_3: 'How to get from airport to city center',
+    chat_suggest_4: 'Emergency phrases I should know',
+    chat_thinking: 'Thinking...',
+
+    // Chat responses
+    chat_resp_shanghai: "Great choice! Here's a 3-day Shanghai itinerary:\n\n**Day 1: Classic Shanghai**\n• Morning: The Bund waterfront walk\n• Afternoon: Yu Garden & Old City\n• Evening: Nanjing Road shopping + dinner\n\n**Day 2: Modern Shanghai**\n• Morning: Shanghai Tower (tallest building)\n• Afternoon: Art Museum or Tianzifang\n• Evening: Xintiandi nightlife\n\n**Day 3: Local Experience**\n• Morning: French Concession walking\n• Afternoon: Propaganda Poster Museum\n• Evening: Huangpu River cruise\n\nWant me to add restaurant recommendations or help with transportation?",
+    chat_resp_food: "Here are some must-try Shanghai foods:\n\n🍜 **Xiao Long Bao** (小笼包) - Soup dumplings, try at Din Tai Fung\n🥘 **Red Braised Pork** (红烧肉) - Sweet soy-braised pork belly\n🥟 **Sheng Jian Bao** (生煎包) - Pan-fried buns\n🦀 **Hairy Crab** (大闸蟹) - Seasonal delicacy (Oct-Nov)\n\nLocal tip: Head to Yunnan South Road Food Street for the best street food experience!",
+    chat_resp_transport: "From Shanghai Pudong Airport to city center:\n\n🚇 **Maglev Train** (Fastest)\n• 8 minutes to Longyang Road\n• Then transfer to Metro Line 2\n• Cost: ¥50 (¥40 with flight ticket)\n\n🚌 **Airport Bus** (Budget)\n• Multiple routes to different areas\n• Cost: ¥16-30\n• Duration: 60-90 min\n\n🚕 **Taxi** (Most convenient)\n• Cost: ¥150-200 to downtown\n• Duration: 45-60 min\n• Use Didi app for ride-hailing\n\n💡 Pro tip: Get a Shanghai Metro card (交通卡) for easy public transit!",
+    chat_resp_emergency: "Essential emergency phrases:\n\n🆘 **Help!** - 救命! (Jiùmìng!)\n🚑 **Call ambulance** - 叫救护车 (Jiào jiùhùchē)\n👮 **Call police** - 报警 (Bàojǐng) / 打110 (Dǎ 110)\n🔥 **Fire** - 着火了 (Zháohuǒ le)\n🏥 **Hospital** - 医院 (Yīyuàn)\n💊 **Pharmacy** - 药店 (Yàodiàn)\n\n📱 Emergency numbers:\n• Police: 110\n• Ambulance: 120\n• Fire: 119\n\nI've saved these to your offline phrases for quick access!",
+
+    // Translate
+    translate_title: 'Translate',
+    translate_input_placeholder: 'Enter text to translate...',
+    translate_btn: 'Translate',
+    translate_swap: 'Swap',
+    translate_copy: 'Copy',
+    translate_fullscreen: 'Full Screen',
+    translate_save: 'Save',
+    translate_audio: 'Listen',
+    translate_from: 'From',
+    translate_to: 'To',
+    lang_en: 'English',
+    lang_zh: 'Chinese (中文)',
+    translate_copied: 'Copied!',
+
+    // City Detail
+    city_overview: 'Overview',
+    city_guides: 'Guides',
+    city_food: 'Food',
+    city_transport: 'Transport',
+    city_culture: 'Culture',
+    city_accommodation: 'Stay',
+    city_best_season: 'Best Season',
+    city_ask_ai: 'Ask AI about this city',
+    city_offline: 'Available Offline',
+
+    // City Data
+    shanghai_name: 'Shanghai',
+    shanghai_tagline: 'The Pearl of the Orient',
+    shanghai_desc: 'Shanghai is China\'s biggest city and global financial hub. Famous for its futuristic skyline along the Bund, traditional gardens, incredible food scene, and vibrant nightlife. A perfect blend of East meets West.',
+    shanghai_season: 'March–May & September–November',
+    shanghai_transport: 'Shanghai has one of the world\'s best metro systems with 18+ lines. Get a Shanghai Public Transit Card or use Alipay/WeChat for tap-to-ride. The Maglev train reaches 431 km/h from Pudong Airport.',
+    shanghai_culture: 'Shanghai\'s culture blends colonial-era architecture with ultra-modern design. Visit the French Concession for tree-lined streets, traditional shikumen lane houses, and trendy cafés. Don\'t miss the Shanghai Museum\'s free collection.',
+
+    beijing_name: 'Beijing',
+    beijing_tagline: 'The Ancient Capital',
+    beijing_desc: 'Beijing, China\'s capital for over 800 years, is a city where ancient history meets modern ambition. Home to the Forbidden City, Great Wall, and countless temples, it\'s the heart of Chinese culture and politics.',
+    beijing_season: 'April–May & September–October',
+    beijing_transport: 'Beijing Subway covers the entire city with 27 lines. Get a Yikatong transit card. Didi (Chinese Uber) is essential. Avoid rush hours (7-9 AM, 5-7 PM). The Airport Express connects Capital Airport to the city.',
+    beijing_culture: 'Beijing is the cradle of Chinese civilization. Explore hutong alleys by rickshaw, watch Peking Opera, and try authentic Peking Duck. The 798 Art District showcases contemporary Chinese art in former factories.',
+
+    chengdu_name: 'Chengdu',
+    chengdu_tagline: 'The Land of Abundance',
+    chengdu_desc: 'Chengdu is famous for giant pandas, spicy Sichuan cuisine, and its famously relaxed lifestyle. As the gateway to western China, it offers a unique blend of ancient culture and modern comfort.',
+    chengdu_season: 'March–June & September–November',
+    chengdu_transport: 'Chengdu Metro has 12 lines covering major areas. Use Tianfu Tong app for transit. The city is very walkable in the center. High-speed trains connect to Xi\'an (3h), Chongqing (1h), and more.',
+    chengdu_culture: 'Chengdu\'s teahouse culture is legendary — spend an afternoon sipping tea and watching locals play mahjong. Sichuan Opera features the famous fire-breathing face-changing (Bian Lian) performance. Don\'t miss Jinli Ancient Street.',
+
+    xian_name: "Xi'an",
+    xian_tagline: 'Ancient Capital of 13 Dynasties',
+    xian_desc: "Xi'an is one of China's oldest cities and the starting point of the Silk Road. Home to the world-famous Terracotta Army, ancient city walls, and incredible Muslim Quarter cuisine, it's a living museum of Chinese civilization.",
+    xian_season: 'March–May & September–November',
+    xian_transport: "Xi'an Metro has 8 lines covering major tourist areas. The city center is walkable. Airport shuttle buses connect to the Bell Tower. High-speed trains reach Beijing (4.5h), Shanghai (6h), and Chengdu (3h).",
+    xian_culture: "Xi'an was the capital of 13 dynasties including Qin, Han, and Tang. The Muslim Quarter blends Chinese and Islamic cultures with incredible street food. Don't miss the Tang Dynasty music and dance show.",
+
+    hangzhou_name: 'Hangzhou',
+    hangzhou_tagline: 'Paradise on Earth',
+    hangzhou_desc: 'Hangzhou is famous for the stunning West Lake, a UNESCO World Heritage site. Known as "Paradise on Earth" in Chinese culture, it offers beautiful gardens, ancient temples, and the birthplace of Longjing (Dragon Well) tea.',
+    hangzhou_season: 'March–May & September–November',
+    hangzhou_transport: 'Hangzhou Metro has 12 lines. The city is bike-friendly with public bike sharing. West Lake area is best explored on foot or by electric bus. High-speed trains connect to Shanghai (1h) and Nanjing (2h).',
+    hangzhou_culture: 'Hangzhou was the capital of the Southern Song Dynasty. West Lake has inspired poets and painters for centuries. Visit a traditional teahouse to taste authentic Longjing tea. The city is also home to Alibaba and modern tech culture.',
+
+    guangzhou_name: 'Guangzhou',
+    guangzhou_tagline: 'City of Flowers & Dim Sum',
+    guangzhou_desc: 'Guangzhou is the birthplace of Cantonese cuisine and one of China\'s most dynamic cities. Famous for dim sum, the iconic Canton Tower, and as a gateway to the Pearl River Delta, it offers an authentic southern China experience.',
+    guangzhou_season: 'October–December',
+    guangzhou_transport: 'Guangzhou Metro is one of the largest in China with 16+ lines. The Pearl River ferry is a scenic option. Baiyun Airport is well-connected. High-speed trains reach Hong Kong (1h) and Shenzhen (30min).',
+    guangzhou_culture: 'Guangzhou is the heart of Cantonese culture — from morning yum cha (dim sum) to evening Pearl River cruises. The Chen Clan Ancestral Hall showcases exquisite Lingnan architecture. Shamian Island offers colonial-era charm.',
+
+    // Phrases
+    phrases_title: 'Survival Phrases',
+    phrases_greetings: 'Greetings',
+    phrases_food: 'Food & Dining',
+    phrases_transport: 'Transport',
+    phrases_shopping: 'Shopping',
+    phrases_emergency: 'Emergency',
+    phrases_hotel: 'Hotel',
+
+    // Phrase data
+    p_hello_en: 'Hello',
+    p_hello_zh: '你好',
+    p_hello_pinyin: 'Nǐ hǎo',
+    p_thank_en: 'Thank you',
+    p_thank_zh: '谢谢',
+    p_thank_pinyin: 'Xièxiè',
+    p_bye_en: 'Goodbye',
+    p_bye_zh: '再见',
+    p_bye_pinyin: 'Zàijiàn',
+    p_sorry_en: 'Sorry / Excuse me',
+    p_sorry_zh: '不好意思',
+    p_sorry_pinyin: 'Bù hǎo yìsi',
+    p_howmuch_en: 'How much?',
+    p_howmuch_zh: '多少钱？',
+    p_howmuch_pinyin: 'Duōshao qián?',
+    p_yesno_en: 'Yes / No',
+    p_yesno_zh: '是 / 不是',
+    p_yesno_pinyin: 'Shì / Bú shì',
+    p_help_en: 'I need help',
+    p_help_zh: '我需要帮助',
+    p_help_pinyin: 'Wǒ xūyào bāngzhù',
+    p_understand_en: 'I don\'t understand',
+    p_understand_zh: '我听不懂',
+    p_understand_pinyin: 'Wǒ tīng bù dǒng',
+    p_bill_en: 'Bill please',
+    p_bill_zh: '买单',
+    p_bill_pinyin: 'Mǎi dān',
+    p_menu_en: 'Menu please',
+    p_menu_zh: '请给我菜单',
+    p_menu_pinyin: 'Qǐng gěi wǒ càidān',
+    p_water_en: 'A glass of water',
+    p_water_zh: '一杯水',
+    p_water_pinyin: 'Yì bēi shuǐ',
+    p_spicy_en: 'Not spicy please',
+    p_spicy_zh: '不要辣',
+    p_spicy_pinyin: 'Bú yào là',
+    p_veg_en: 'I\'m vegetarian',
+    p_veg_zh: '我是素食者',
+    p_veg_pinyin: 'Wǒ shì sùshí zhě',
+    p_metro_en: 'Where is the subway?',
+    p_metro_zh: '地铁站在哪里？',
+    p_metro_pinyin: 'Dìtiě zhàn zài nǎlǐ?',
+    p_taxi_en: 'Take me to this address',
+    p_taxi_zh: '送我去这个地址',
+    p_taxi_pinyin: 'Sòng wǒ qù zhège dìzhǐ',
+    p_airport_en: 'Airport please',
+    p_airport_zh: '去机场',
+    p_airport_pinyin: 'Qù jīchǎng',
+    p_hotel_en: 'I have a reservation',
+    p_hotel_zh: '我有预订',
+    p_hotel_pinyin: 'Wǒ yǒu yùdìng',
+    p_wifi_en: 'What\'s the WiFi password?',
+    p_wifi_zh: 'WiFi密码是什么？',
+    p_wifi_pinyin: 'WiFi mìmǎ shì shénme?',
+    p_help_urgent_en: 'Help! Call the police!',
+    p_help_urgent_zh: '救命！叫警察！',
+    p_help_urgent_pinyin: 'Jiùmìng! Jiào jǐngchá!',
+    p_hospital_en: 'Where is the hospital?',
+    p_hospital_zh: '医院在哪里？',
+    p_hospital_pinyin: 'Yīyuàn zài nǎlǐ?',
+
+    // Auth
+    auth_login: 'Sign In',
+    auth_register: 'Create Account',
+    auth_welcome_back: 'Welcome back',
+    auth_welcome_new: 'Create your account',
+    auth_subtitle_login: 'Sign in to access your travel assistant',
+    auth_subtitle_register: 'Start your AI-powered China journey',
+    auth_email: 'Email',
+    auth_email_placeholder: 'your@email.com',
+    auth_password: 'Password',
+    auth_password_placeholder: 'At least 8 characters',
+    auth_confirm_password: 'Confirm Password',
+    auth_name: 'Display Name',
+    auth_name_placeholder: 'Your name',
+    auth_forgot: 'Forgot password?',
+    auth_no_account: "Don't have an account?",
+    auth_has_account: 'Already have an account?',
+    auth_sign_in: 'Sign In',
+    auth_sign_up: 'Sign Up',
+    auth_or: 'or continue with',
+    auth_google: 'Google',
+    auth_wechat: 'WeChat',
+    auth_agree: 'By signing up, you agree to our',
+    auth_terms: 'Terms of Service',
+    auth_and: 'and',
+    auth_privacy: 'Privacy Policy',
+    auth_err_email: 'Please enter a valid email',
+    auth_err_password: 'Password must be at least 8 characters',
+    auth_err_confirm: 'Passwords do not match',
+    auth_err_name: 'Please enter your name',
+    auth_err_exists: 'This email is already registered',
+    auth_err_not_found: 'No account found with this email',
+    auth_err_wrong_pw: 'Incorrect password',
+    auth_success_login: 'Welcome back!',
+    auth_success_register: 'Account created! Welcome!',
+    auth_logout: 'Sign Out',
+    auth_logout_confirm: 'Are you sure you want to sign out?',
+
+    // Profile
+    profile_title: 'Profile',
+    profile_guest: 'Guest User',
+    profile_login: 'Log In / Sign Up',
+    profile_subscription: 'Subscription',
+    profile_free_plan: 'Free Plan',
+    profile_upgrade: 'Upgrade to Pro',
+    profile_usage: 'Usage Today',
+    profile_ai_requests: 'AI Requests',
+    profile_translations: 'Translations',
+    profile_saved: 'Saved Items',
+    profile_offline: 'Offline Packs',
+    profile_language: 'Language',
+    profile_about: 'About',
+    profile_version: 'Version 1.0.0',
+    profile_account: 'Account Settings',
+    profile_email: 'Email',
+    profile_joined: 'Member since',
+    profile_edit: 'Edit Profile',
+    profile_security: 'Security',
+    profile_change_pw: 'Change Password',
+    profile_delete_account: 'Delete Account',
+
+    // General
+    loading: 'Loading...',
+    error: 'Something went wrong',
+    retry: 'Retry',
+    cancel: 'Cancel',
+    save: 'Save',
+    delete: 'Delete',
+    close: 'Close',
+    back: 'Back',
+    offline_banner: 'You are offline. Some features may be limited.',
+  },
+
+  zh: {
+    // Navigation
+    nav_home: '首页',
+    nav_chat: 'AI助手',
+    nav_translate: '翻译',
+    nav_phrases: '常用语',
+    nav_profile: '我的',
+    app_name: '旅行AI助手',
+
+    // Home
+    home_search: '问我任何关于中国旅行的问题...',
+    home_quick_translate: '快速翻译',
+    home_quick_translate_desc: '文字和语音翻译',
+    home_ai_chat: 'AI助手',
+    home_ai_chat_desc: '行程规划和建议',
+    home_camera: '拍照翻译',
+    home_camera_desc: '扫描翻译标识',
+    home_phrases: '应急短语',
+    home_phrases_desc: '必备中文短语',
+    home_featured: '热门城市',
+    home_see_all: '查看全部',
+    home_suggestions: '为你推荐',
+    home_sug_1: '上海最好吃的小吃街',
+    home_sug_2: '如何使用微信支付',
+    home_sug_3: '北京故宫游玩攻略',
+    home_sug_4: '中国茶文化入门',
+
+    // Chat
+    chat_title: 'AI助手',
+    chat_placeholder: '输入你的问题...',
+    chat_welcome: '你好！我是你的AI旅行助手。我可以帮你规划行程、翻译短语、找当地美食和导航中国。你想了解什么？',
+    chat_suggest_1: '规划上海3日游',
+    chat_suggest_2: '附近最好的本地餐厅',
+    chat_suggest_3: '从机场到市中心怎么走',
+    chat_suggest_4: '我应该知道的应急短语',
+    chat_thinking: '思考中...',
+
+    // Chat responses
+    chat_resp_shanghai: "好选择！这是3天上海行程：\n\n**第一天：经典上海**\n• 上午：外滩漫步\n• 下午：豫园和老城厢\n• 晚上：南京路步行街 + 晚餐\n\n**第二天：现代上海**\n• 上午：上海中心大厦（最高建筑）\n• 下午：美术馆或田子坊\n• 晚上：新天地夜生活\n\n**第三天：本地体验**\n• 上午：法租界漫步\n• 下午：宣传画海报博物馆\n• 晚上：黄浦江游船\n\n需要我推荐餐厅或帮你安排交通吗？",
+    chat_resp_food: "这些是必吃的上海美食：\n\n🍜 **小笼包** - 汤包，推荐鼎泰丰\n🥘 **红烧肉** - 甜酱红烧五花肉\n🥟 **生煎包** - 煎包\n🦀 **大闸蟹** - 时令美味（10-11月）\n\n小贴士：去云南南路美食街品尝最好的街头小吃！",
+    chat_resp_transport: "从上海浦东机场到市中心：\n\n🚇 **磁悬浮列车**（最快）\n• 8分钟到龙阳路\n• 换乘地铁2号线\n• 费用：50元（凭机票40元）\n\n🚌 **机场大巴**（经济）\n• 多条线路到不同区域\n• 费用：16-30元\n• 时长：60-90分钟\n\n🚕 **出租车**（最方便）\n• 费用：150-200元到市中心\n• 时长：45-60分钟\n• 使用滴滴打车\n\n💡 建议：办理上海交通卡方便乘坐公共交通！",
+    chat_resp_emergency: "必备应急短语：\n\n🆘 **救命！** - Help!\n🚑 **叫救护车** - Call ambulance\n👮 **报警/打110** - Call police\n🔥 **着火了** - Fire!\n🏥 **医院** - Hospital\n💊 **药店** - Pharmacy\n\n📱 紧急电话：\n• 报警：110\n• 急救：120\n• 火警：119\n\n已将这些保存到离线短语中！",
+
+    // Translate
+    translate_title: '翻译',
+    translate_input_placeholder: '输入要翻译的文字...',
+    translate_btn: '翻译',
+    translate_swap: '互换',
+    translate_copy: '复制',
+    translate_fullscreen: '全屏',
+    translate_save: '保存',
+    translate_audio: '听发音',
+    translate_from: '源语言',
+    translate_to: '目标语言',
+    lang_en: '英文',
+    lang_zh: '中文',
+    translate_copied: '已复制！',
+
+    // City Detail
+    city_overview: '概览',
+    city_guides: '攻略',
+    city_food: '美食',
+    city_transport: '交通',
+    city_culture: '文化',
+    city_accommodation: '住宿',
+    city_best_season: '最佳季节',
+    city_ask_ai: '向AI咨询这个城市',
+    city_offline: '支持离线',
+
+    // City Data
+    shanghai_name: '上海',
+    shanghai_tagline: '东方明珠',
+    shanghai_desc: '上海是中国最大的城市和全球金融中心。以外滩的天际线、传统园林、美食和夜生活闻名，是东西方文化完美融合之地。',
+    shanghai_season: '3-5月 & 9-11月',
+    shanghai_transport: '上海拥有世界一流的地铁系统，18+条线路。办理上海交通卡或使用支付宝/微信乘车。磁悬浮列车从浦东机场可达431公里/小时。',
+    shanghai_culture: '上海文化融合了殖民时代建筑与超现代设计。法租界的梧桐树街道、传统石库门里弄和时尚咖啡馆不可错过。上海博物馆免费参观。',
+
+    beijing_name: '北京',
+    beijing_tagline: '千年古都',
+    beijing_desc: '北京是中国800多年的首都，是古代历史与现代雄心的交汇之地。拥有故宫、长城和无数寺庙，是中国文化和政治的中心。',
+    beijing_season: '4-5月 & 9-10月',
+    beijing_transport: '北京地铁覆盖全城，27条线路。办理一卡通。滴滴出行必备。避开早晚高峰（7-9点，17-19点）。机场快轨连接首都机场。',
+    beijing_culture: '北京是中华文明的摇篮。坐三轮车逛胡同、看京剧、品尝正宗北京烤鸭。798艺术区在旧工厂中展示当代中国艺术。',
+
+    chengdu_name: '成都',
+    chengdu_tagline: '天府之国',
+    chengdu_desc: '成都以大熊猫、麻辣川菜和悠闲的生活方式闻名。作为中国西部的门户，它提供了古老文化与现代舒适的独特融合。',
+    chengdu_season: '3-6月 & 9-11月',
+    chengdu_transport: '成都地铁12条线路覆盖主要区域。使用天府通APP。市中心很适合步行。高铁可达西安（3小时）、重庆（1小时）等城市。',
+    chengdu_culture: '成都的茶馆文化是传奇般的存在——花一个下午喝茶、看当地人打麻将。川剧以变脸表演闻名。锦里古街不可错过。',
+
+    xian_name: '西安',
+    xian_tagline: '十三朝古都',
+    xian_desc: '西安是中国最古老的城市之一，也是丝绸之路的起点。拥有世界闻名的兵马俑、古城墙和令人惊叹的回民街美食，是中华文明的活博物馆。',
+    xian_season: '3-5月 & 9-11月',
+    xian_transport: '西安地铁8条线路覆盖主要旅游区域。市中心适合步行。机场大巴连接钟楼。高铁可达北京（4.5小时）、上海（6小时）、成都（3小时）。',
+    xian_culture: '西安是秦、汉、唐等13个朝代的都城。回民街融合了中国和伊斯兰文化，街头美食令人惊叹。不要错过唐代音乐舞蹈表演。',
+
+    hangzhou_name: '杭州',
+    hangzhou_tagline: '人间天堂',
+    hangzhou_desc: '杭州以美丽的西湖闻名，西湖是联合国教科文组织世界文化遗产。在中国文化中被称为"人间天堂"，拥有美丽的园林、古老的寺庙和龙井茶的发源地。',
+    hangzhou_season: '3-5月 & 9-11月',
+    hangzhou_transport: '杭州地铁12条线路。城市适合骑行，有公共自行车。西湖区域最适合步行或乘坐电瓶车。高铁到上海（1小时）、南京（2小时）。',
+    hangzhou_culture: '杭州是南宋的都城。西湖几个世纪以来激发了无数诗人和画家的灵感。去传统茶馆品尝正宗龙井茶。这座城市也是阿里巴巴和现代科技文化的发源地。',
+
+    guangzhou_name: '广州',
+    guangzhou_tagline: '花城与美食之都',
+    guangzhou_desc: '广州是粤菜的发源地，也是中国最具活力的城市之一。以早茶点心、标志性的广州塔和作为珠三角门户而闻名，提供正宗的中国南方体验。',
+    guangzhou_season: '10-12月',
+    guangzhou_transport: '广州地铁是中国最大的地铁系统之一，16+条线路。珠江轮渡是风景优美的选择。白云机场交通便利。高铁到香港（1小时）、深圳（30分钟）。',
+    guangzhou_culture: '广州是粤文化的核心——从早茶点心到珠江夜游。陈家祠展示了精美的岭南建筑。沙面岛散发着殖民时代的魅力。',
+
+    // Phrases
+    phrases_title: '常用短语',
+    phrases_greetings: '问候',
+    phrases_food: '餐饮',
+    phrases_transport: '交通',
+    phrases_shopping: '购物',
+    phrases_emergency: '紧急',
+    phrases_hotel: '酒店',
+
+    // Phrase data
+    p_hello_en: 'Hello',
+    p_hello_zh: '你好',
+    p_hello_pinyin: 'Nǐ hǎo',
+    p_thank_en: 'Thank you',
+    p_thank_zh: '谢谢',
+    p_thank_pinyin: 'Xièxiè',
+    p_bye_en: 'Goodbye',
+    p_bye_zh: '再见',
+    p_bye_pinyin: 'Zàijiàn',
+    p_sorry_en: 'Sorry / Excuse me',
+    p_sorry_zh: '不好意思',
+    p_sorry_pinyin: 'Bù hǎo yìsi',
+    p_howmuch_en: 'How much?',
+    p_howmuch_zh: '多少钱？',
+    p_howmuch_pinyin: 'Duōshao qián?',
+    p_yesno_en: 'Yes / No',
+    p_yesno_zh: '是 / 不是',
+    p_yesno_pinyin: 'Shì / Bú shì',
+    p_help_en: 'I need help',
+    p_help_zh: '我需要帮助',
+    p_help_pinyin: 'Wǒ xūyào bāngzhù',
+    p_understand_en: 'I don\'t understand',
+    p_understand_zh: '我听不懂',
+    p_understand_pinyin: 'Wǒ tīng bù dǒng',
+    p_bill_en: 'Bill please',
+    p_bill_zh: '买单',
+    p_bill_pinyin: 'Mǎi dān',
+    p_menu_en: 'Menu please',
+    p_menu_zh: '请给我菜单',
+    p_menu_pinyin: 'Qǐng gěi wǒ càidān',
+    p_water_en: 'A glass of water',
+    p_water_zh: '一杯水',
+    p_water_pinyin: 'Yì bēi shuǐ',
+    p_spicy_en: 'Not spicy please',
+    p_spicy_zh: '不要辣',
+    p_spicy_pinyin: 'Bú yào là',
+    p_veg_en: 'I\'m vegetarian',
+    p_veg_zh: '我是素食者',
+    p_veg_pinyin: 'Wǒ shì sùshí zhě',
+    p_metro_en: 'Where is the subway?',
+    p_metro_zh: '地铁站在哪里？',
+    p_metro_pinyin: 'Dìtiě zhàn zài nǎlǐ?',
+    p_taxi_en: 'Take me to this address',
+    p_taxi_zh: '送我去这个地址',
+    p_taxi_pinyin: 'Sòng wǒ qù zhège dìzhǐ',
+    p_airport_en: 'Airport please',
+    p_airport_zh: '去机场',
+    p_airport_pinyin: 'Qù jīchǎng',
+    p_hotel_en: 'I have a reservation',
+    p_hotel_zh: '我有预订',
+    p_hotel_pinyin: 'Wǒ yǒu yùdìng',
+    p_wifi_en: 'What\'s the WiFi password?',
+    p_wifi_zh: 'WiFi密码是什么？',
+    p_wifi_pinyin: 'WiFi mìmǎ shì shénme?',
+    p_help_urgent_en: 'Help! Call the police!',
+    p_help_urgent_zh: '救命！叫警察！',
+    p_help_urgent_pinyin: 'Jiùmìng! Jiào jǐngchá!',
+    p_hospital_en: 'Where is the hospital?',
+    p_hospital_zh: '医院在哪里？',
+    p_hospital_pinyin: 'Yīyuàn zài nǎlǐ?',
+
+    // Auth
+    auth_login: '登录',
+    auth_register: '注册账号',
+    auth_welcome_back: '欢迎回来',
+    auth_welcome_new: '创建你的账号',
+    auth_subtitle_login: '登录后使用完整的旅行助手功能',
+    auth_subtitle_register: '开启你的AI智能中国之旅',
+    auth_email: '邮箱',
+    auth_email_placeholder: 'your@email.com',
+    auth_password: '密码',
+    auth_password_placeholder: '至少8位字符',
+    auth_confirm_password: '确认密码',
+    auth_name: '昵称',
+    auth_name_placeholder: '你的名字',
+    auth_forgot: '忘记密码？',
+    auth_no_account: '还没有账号？',
+    auth_has_account: '已有账号？',
+    auth_sign_in: '登录',
+    auth_sign_up: '注册',
+    auth_or: '或使用以下方式登录',
+    auth_google: 'Google',
+    auth_wechat: '微信',
+    auth_agree: '注册即表示你同意我们的',
+    auth_terms: '服务条款',
+    auth_and: '和',
+    auth_privacy: '隐私政策',
+    auth_err_email: '请输入有效的邮箱地址',
+    auth_err_password: '密码至少需要8位字符',
+    auth_err_confirm: '两次输入的密码不一致',
+    auth_err_name: '请输入你的昵称',
+    auth_err_exists: '该邮箱已被注册',
+    auth_err_not_found: '未找到该邮箱对应的账号',
+    auth_err_wrong_pw: '密码错误',
+    auth_success_login: '欢迎回来！',
+    auth_success_register: '注册成功！欢迎加入！',
+    auth_logout: '退出登录',
+    auth_logout_confirm: '确定要退出登录吗？',
+
+    // Profile
+    profile_title: '个人中心',
+    profile_guest: '游客',
+    profile_login: '登录 / 注册',
+    profile_subscription: '订阅',
+    profile_free_plan: '免费版',
+    profile_upgrade: '升级专业版',
+    profile_usage: '今日使用',
+    profile_ai_requests: 'AI请求',
+    profile_translations: '翻译次数',
+    profile_saved: '已保存',
+    profile_offline: '离线包',
+    profile_language: '语言',
+    profile_about: '关于',
+    profile_version: '版本 1.0.0',
+    profile_account: '账号设置',
+    profile_email: '邮箱',
+    profile_joined: '加入时间',
+    profile_edit: '编辑资料',
+    profile_security: '安全设置',
+    profile_change_pw: '修改密码',
+    profile_delete_account: '注销账号',
+
+    // General
+    loading: '加载中...',
+    error: '出了点问题',
+    retry: '重试',
+    cancel: '取消',
+    save: '保存',
+    delete: '删除',
+    close: '关闭',
+    back: '返回',
+    offline_banner: '您处于离线状态，部分功能可能受限。',
+  }
+};
+
+// i18n helper
+let currentLang = localStorage.getItem('lang') || 'en';
+
+function t(key) {
+  return (I18N[currentLang] && I18N[currentLang][key]) || (I18N.en[key]) || key;
+}
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('lang', lang);
+  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+}
+
+function getLang() { return currentLang; }
+
+  </script>
+  <script>
+// ===== AI Travel Assistant - Main App =====
+
+let currentPage = 'home';
+let currentPhraseCat = 'greetings';
+let currentCity = null;
+let chatMessages = [];
+let chatHistory = [];
+let currentChatId = null;
+let translateResult = null;
+let translateInputText = '';
+let translateFromLang = '';
+let translateToLang = '';
+let currentAdminTab = 'models';
+let authMode = 'login'; // 'login' | 'register'
+
+// ===== Auth State =====
+const ADMIN_EMAILS = ['admin@travelmate.com', 'root@travelmate.com', 'admin@example.com'];
+
+function isAdmin(user) {
+  return user && ADMIN_EMAILS.includes(user.email);
+}
+
+function getAuthUser() {
+  try { return JSON.parse(localStorage.getItem('authUser') || 'null'); } catch { return null; }
+}
+
+function setAuthUser(user) {
+  if (user) localStorage.setItem('authUser', JSON.stringify(user));
+  else localStorage.removeItem('authUser');
+}
+
+function isLoggedIn() { return !!getAuthUser(); }
+
+function getRegisteredUsers() {
+  try { return JSON.parse(localStorage.getItem('registeredUsers') || '{}'); } catch { return {}; }
+}
+
+function saveRegisteredUsers(users) {
+  localStorage.setItem('registeredUsers', JSON.stringify(users));
+}
+
+// Auth actions
+function doLogin(email, password) {
+  const users = getRegisteredUsers();
+  if (!users[email]) return { ok: false, key: 'auth_err_not_found' };
+  if (users[email].password !== password) return { ok: false, key: 'auth_err_wrong_pw' };
+  // Sync admin role based on email
+  users[email].role = ADMIN_EMAILS.includes(email) ? 'admin' : (users[email].role || 'user');
+  saveRegisteredUsers(users);
+  setAuthUser(users[email]);
+  return { ok: true };
+}
+
+function doRegister(name, email, password) {
+  const users = getRegisteredUsers();
+  if (users[email]) return { ok: false, key: 'auth_err_exists' };
+  const user = { name, email, password, avatar: name.charAt(0).toUpperCase(), joinedAt: new Date().toISOString(), role: ADMIN_EMAILS.includes(email) ? 'admin' : 'user' };
+  users[email] = user;
+  saveRegisteredUsers(users);
+  setAuthUser(user);
+  return { ok: true };
+}
+
+function doLogout() {
+  setAuthUser(null);
+  currentPage = 'home';
+  render();
+}
+
+// ===== Chat History =====
+function loadChatHistory() {
+  try { chatHistory = JSON.parse(localStorage.getItem('chatHistory') || '[]'); } catch { chatHistory = []; }
+}
+
+function saveChatHistory() {
+  localStorage.setItem('chatHistory', JSON.stringify(chatHistory.slice(0, 20)));
+}
+
+function startNewChat() {
+  if (chatMessages.length > 0 && currentChatId) {
+    const existing = chatHistory.find(h => h.id === currentChatId);
+    if (existing) {
+      existing.messages = [...chatMessages];
+      existing.updatedAt = new Date().toISOString();
+    }
+  }
+  currentChatId = 'chat_' + Date.now();
+  chatMessages = [];
+  render();
+}
+
+function saveCurrentChat() {
+  if (chatMessages.length === 0) return;
+  const firstUserMsg = chatMessages.find(m => m.role === 'user');
+  const title = firstUserMsg ? firstUserMsg.content.substring(0, 30) + (firstUserMsg.content.length > 30 ? '...' : '') : 'New Chat';
+  const existing = chatHistory.find(h => h.id === currentChatId);
+  if (existing) {
+    existing.messages = [...chatMessages];
+    existing.title = title;
+    existing.updatedAt = new Date().toISOString();
+  } else {
+    chatHistory.unshift({ id: currentChatId, title, messages: [...chatMessages], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+  }
+  saveChatHistory();
+}
+
+function loadChat(id) {
+  const chat = chatHistory.find(h => h.id === id);
+  if (!chat) return;
+  currentChatId = id;
+  chatMessages = [...chat.messages];
+  render();
+}
+
+function deleteChat(id, e) {
+  e.stopPropagation();
+  chatHistory = chatHistory.filter(h => h.id !== id);
+  saveChatHistory();
+  if (currentChatId === id) {
+    currentChatId = null;
+    chatMessages = [];
+  }
+  render();
+}
+
+// ===== Admin mock data =====
+let adminModels = [
+  { id: 'm1', provider: 'OpenAI', modelKey: 'gpt-4o', apiBase: 'https://api.openai.com/v1', isEnabled: true, priority: 1, timeoutMs: 30000, maxTokens: 4096, temperature: 0.7, supportsStreaming: true, supportsVision: true },
+  { id: 'm2', provider: 'OpenAI', modelKey: 'gpt-4o-mini', apiBase: 'https://api.openai.com/v1', isEnabled: true, priority: 2, timeoutMs: 20000, maxTokens: 4096, temperature: 0.7, supportsStreaming: true, supportsVision: false },
+  { id: 'm3', provider: 'Anthropic', modelKey: 'claude-sonnet-4-20250514', apiBase: 'https://api.anthropic.com/v1', isEnabled: true, priority: 3, timeoutMs: 30000, maxTokens: 4096, temperature: 0.5, supportsStreaming: true, supportsVision: true },
+  { id: 'm4', provider: 'DeepSeek', modelKey: 'deepseek-chat', apiBase: 'https://api.deepseek.com/v1', isEnabled: false, priority: 4, timeoutMs: 20000, maxTokens: 4096, temperature: 0.7, supportsStreaming: true, supportsVision: false },
+  { id: 'm5', provider: '百度文心', modelKey: 'ernie-4.0-8k', apiBase: 'https://aip.baidubce.com/rpc/2.0/ai_custom/v1', isEnabled: false, priority: 5, timeoutMs: 20000, maxTokens: 4096, temperature: 0.7, supportsStreaming: false, supportsVision: false },
+];
+
+let adminPrompts = [
+  { id: 'p1', sceneCode: 'trip_planning', name: 'Trip Planner', language: 'en', version: 3, isPublished: true },
+  { id: 'p2', sceneCode: 'translator', name: 'Travel Translator', language: 'en', version: 2, isPublished: true },
+  { id: 'p3', sceneCode: 'local_guide', name: 'Local Guide', language: 'en', version: 1, isPublished: false },
+  { id: 'p4', sceneCode: 'food_helper', name: 'Food Advisor', language: 'zh', version: 2, isPublished: true },
+];
+
+// ===== Router =====
+function navigate(page, data) {
+  currentPage = page;
+  if (data && page === 'city') currentCity = data;
+  render();
+  window.scrollTo(0, 0);
+}
+
+function render() {
+  const app = document.getElementById('app');
+  app.innerHTML = renderLayout();
+  bindEvents();
+}
+
+// ===== Layout =====
+function renderLayout() {
+  return `
+    <div class="app-layout">
+      ${renderSidebar()}
+      <div class="main-content">
+        ${renderContentHeader()}
+        <div class="content-body">
+          ${renderPage()}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ===== Sidebar =====
+function renderSidebar() {
+  const user = getAuthUser();
+  const isZh = getLang() === 'zh';
+
+  const navItems = [
+    { page: 'home', icon: '🏠', label: t('nav_home'), section: 'main', mobile: true },
+    { page: 'chat', icon: '💬', label: t('nav_chat'), section: 'main', mobile: true },
+    { page: 'translate', icon: '🌐', label: t('translate_title'), section: 'tools', mobile: true },
+    { page: 'phrases', icon: '📝', label: t('nav_phrases'), section: 'tools', mobile: true },
+    { page: 'city', icon: '🏙️', label: isZh ? '城市' : 'Cities', section: 'tools', mobile: true },
+    { page: 'profile', icon: '👤', label: t('nav_profile'), section: 'account', mobile: false },
+  ];
+
+  if (isAdmin(user)) {
+    navItems.push({ page: 'admin', icon: '⚙️', label: isZh ? '管理后台' : 'Admin', section: 'account', mobile: false });
+  }
+
+  const sections = { main: isZh ? '主要' : 'Main', tools: isZh ? '工具' : 'Tools', account: isZh ? '账户' : 'Account' };
+
+  let lastSection = '', navHtml = '';
+  navItems.forEach(item => {
+    if (item.section !== lastSection) {
+      navHtml += `<div class="nav-section-label">${sections[item.section]}</div>`;
+      lastSection = item.section;
+    }
+    navHtml += `
+      <button class="nav-item ${currentPage === item.page ? 'active' : ''}" data-mobile="${item.mobile}" onclick="navigate('${item.page}')">
+        <span class="nav-icon">${item.icon}</span>
+        <span>${item.label}</span>
+      </button>
+    `;
+  });
+
+  return `
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-icon">✈</div>
+        <div>
+          <h1>TravelMate AI</h1>
+          <div class="brand-sub">${isZh ? '旅行智能助手' : 'Smart Travel Assistant'}</div>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        ${navHtml}
+      </nav>
+      <div class="sidebar-footer">
+        ${user ? `
+          <div class="sidebar-user" onclick="navigate('profile')" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;cursor:pointer;margin-bottom:8px;transition:background 0.2s" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='transparent'">
+            <div style="width:32px;height:32px;border-radius:50%;background:${isAdmin(user) ? 'linear-gradient(135deg,#FAAD14,#FF4D4F)' : 'var(--primary)'};color:white;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0">${user.avatar || user.name.charAt(0).toUpperCase()}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${user.name}${isAdmin(user) ? ' <span style="font-size:10px;background:linear-gradient(135deg,#FAAD14,#FF4D4F);color:white;padding:1px 6px;border-radius:8px;font-weight:600">Admin</span>' : ''}</div>
+              <div style="font-size:11px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${user.email}</div>
+            </div>
+          </div>
+        ` : `
+          <button class="btn btn-primary btn-sm" style="width:100%;margin-bottom:8px" onclick="navigate('auth')">
+            ${isZh ? '登录 / 注册' : 'Sign In'}
+          </button>
+        `}
+        <div class="lang-switch-desktop">
+          <button class="${getLang() === 'en' ? 'active' : ''}" onclick="switchLang('en')">EN</button>
+          <button class="${getLang() === 'zh' ? 'active' : ''}" onclick="switchLang('zh')">中文</button>
+        </div>
+      </div>
+    </aside>
+  `;
+}
+
+// ===== Content Header =====
+function renderContentHeader() {
+  const user = getAuthUser();
+  const isZh = getLang() === 'zh';
+  const titles = {
+    home: isZh ? '首页' : 'Home',
+    chat: t('chat_title'),
+    translate: t('translate_title'),
+    city: currentCity ? t(currentCity + '_name') : (isZh ? '城市探索' : 'Explore Cities'),
+    phrases: t('phrases_title'),
+    profile: t('profile_title'),
+    admin: isZh ? '管理员后台' : 'Admin Panel',
+    auth: currentPage === 'auth' ? (authMode === 'login' ? t('auth_login') : t('auth_register')) : '',
+  };
+
+  return `
+    <header class="content-header">
+      <h2>${titles[currentPage] || ''}</h2>
+      <div class="header-actions">
+        <div class="lang-switch-mobile">
+          <button class="${getLang() === 'en' ? 'active' : ''}" onclick="switchLang('en')">EN</button>
+          <button class="${getLang() === 'zh' ? 'active' : ''}" onclick="switchLang('zh')">中文</button>
+        </div>
+        ${currentPage === 'chat' ? `<button class="new-chat-btn" onclick="newChat()">+ ${isZh ? '新对话' : 'New Chat'}</button>` : ''}
+        ${currentPage === 'admin' && currentAdminTab === 'models' ? `<button class="btn btn-primary btn-sm" onclick="showAddModelForm()">+ ${isZh ? '添加模型' : 'Add Model'}</button>` : ''}
+        ${user ? `
+          <div class="header-user" style="display:flex;align-items:center;gap:8px">
+            <div style="width:32px;height:32px;border-radius:50%;background:var(--primary);color:white;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700">${user.avatar || user.name.charAt(0).toUpperCase()}</div>
+          </div>
+        ` : ''}
+      </div>
+    </header>
+  `;
+}
+
+// ===== Page Router =====
+function renderPage() {
+  switch (currentPage) {
+    case 'home': return renderHome();
+    case 'chat': return renderChat();
+    case 'translate': return renderTranslate();
+    case 'city': return renderCity();
+    case 'phrases': return renderPhrases();
+    case 'profile': return renderProfile();
+    case 'admin': return renderAdmin();
+    case 'auth': return renderAuth();
+    default: return renderHome();
+  }
+}
+
+// ==========================
+// AUTH PAGE
+// ==========================
+function renderAuth() {
+  const isZh = getLang() === 'zh';
+  const isLogin = authMode === 'login';
+
+  return `
+    <div class="page" style="display:flex;justify-content:center;align-items:flex-start;padding-top:40px">
+      <div class="auth-container" style="width:100%;max-width:440px">
+        <!-- Card -->
+        <div class="card" style="overflow:visible">
+          <div class="card-body" style="padding:40px 36px">
+            <!-- Header -->
+            <div style="text-align:center;margin-bottom:32px">
+              <div style="width:64px;height:64px;border-radius:20px;background:linear-gradient(135deg,var(--primary),var(--primary-light));margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-size:32px;color:white">✈</div>
+              <h2 style="font-size:24px;font-weight:800;margin-bottom:6px">
+                ${isLogin ? t('auth_welcome_back') : t('auth_welcome_new')}
+              </h2>
+              <p style="font-size:14px;color:var(--text-muted)">
+                ${isLogin ? t('auth_subtitle_login') : t('auth_subtitle_register')}
+              </p>
+            </div>
+
+            <!-- Form -->
+            <div id="authForm">
+              ${!isLogin ? `
+                <div class="form-group">
+                  <label>${t('auth_name')}</label>
+                  <input type="text" id="authName" placeholder="${t('auth_name_placeholder')}" autocomplete="name">
+                </div>
+              ` : ''}
+
+              <div class="form-group">
+                <label>${t('auth_email')}</label>
+                <input type="email" id="authEmail" placeholder="${t('auth_email_placeholder')}" autocomplete="email">
+              </div>
+
+              <div class="form-group">
+                <label>${t('auth_password')}</label>
+                <input type="password" id="authPassword" placeholder="${t('auth_password_placeholder')}" autocomplete="${isLogin ? 'current-password' : 'new-password'}">
+              </div>
+
+              ${!isLogin ? `
+                <div class="form-group">
+                  <label>${t('auth_confirm_password')}</label>
+                  <input type="password" id="authConfirmPw" placeholder="${t('auth_password_placeholder')}" autocomplete="new-password">
+                </div>
+              ` : ''}
+
+              <div id="authError" style="color:var(--danger);font-size:13px;margin-bottom:12px;min-height:20px"></div>
+
+              ${isLogin ? `
+                <div style="text-align:right;margin-bottom:16px">
+                  <button style="font-size:13px;color:var(--primary);font-weight:500" onclick="showToast('${isZh ? '重置密码功能开发中' : 'Password reset coming soon'}')">${t('auth_forgot')}</button>
+                </div>
+              ` : `
+                <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px;line-height:1.5">
+                  ${t('auth_agree')} <a href="#" style="color:var(--primary)">${t('auth_terms')}</a> ${t('auth_and')} <a href="#" style="color:var(--primary)">${t('auth_privacy')}</a>
+                </div>
+              `}
+
+              <button class="btn btn-primary" style="width:100%;height:48px;font-size:16px;border-radius:24px" onclick="submitAuth()">
+                ${isLogin ? t('auth_sign_in') : t('auth_sign_up')}
+              </button>
+            </div>
+
+            <!-- Divider -->
+            <div style="display:flex;align-items:center;gap:16px;margin:24px 0">
+              <div style="flex:1;height:1px;background:var(--border)"></div>
+              <span style="font-size:12px;color:var(--text-muted);white-space:nowrap">${t('auth_or')}</span>
+              <div style="flex:1;height:1px;background:var(--border)"></div>
+            </div>
+
+            <!-- Social Login -->
+            <div style="display:flex;gap:12px">
+              <button class="btn btn-secondary" style="flex:1;height:44px;justify-content:center;gap:8px" onclick="socialLogin('google')">
+                <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z"/><path fill="#FBBC05" d="M3.964 10.706A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.038l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.962L3.964 7.294C4.672 5.166 6.656 3.58 9 3.58z"/></svg>
+                ${t('auth_google')}
+              </button>
+              <button class="btn btn-secondary" style="flex:1;height:44px;justify-content:center;gap:8px" onclick="socialLogin('wechat')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="#07C160"><path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 01.213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 00.167-.054l1.903-1.114a.864.864 0 01.717-.098 10.16 10.16 0 002.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.576-3.583-4.196-6.348-8.596-6.348zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 01-1.162 1.178A1.17 1.17 0 014.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 01-1.162 1.178 1.17 1.17 0 01-1.162-1.178c0-.651.52-1.18 1.162-1.18zm5.34 2.867c-1.797-.052-3.746.512-5.28 1.786-1.72 1.428-2.687 3.72-1.78 6.22.942 2.453 3.666 4.229 6.884 4.229.826 0 1.622-.12 2.361-.336a.722.722 0 01.598.082l1.584.926a.272.272 0 00.14.045c.134 0 .24-.109.24-.245 0-.06-.023-.12-.038-.177l-.327-1.233a.49.49 0 01.176-.554C23.016 18.514 24 16.89 24 15.075c0-3.39-3.105-6.163-7.062-6.217zm-2.634 2.87c.535 0 .969.44.969.982a.976.976 0 01-.969.983.976.976 0 01-.969-.983c0-.542.434-.983.97-.983zm5.262 0c.535 0 .969.44.969.982a.976.976 0 01-.969.983.976.976 0 01-.969-.983c0-.542.434-.983.97-.983z"/></svg>
+                ${t('auth_wechat')}
+              </button>
+            </div>
+
+            <!-- Switch mode -->
+            <div style="text-align:center;margin-top:24px;font-size:14px;color:var(--text-secondary)">
+              ${isLogin ? t('auth_no_account') : t('auth_has_account')}
+              <button style="color:var(--primary);font-weight:600;margin-left:4px" onclick="toggleAuthMode()">
+                ${isLogin ? t('auth_sign_up') : t('auth_sign_in')}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function toggleAuthMode() {
+  authMode = authMode === 'login' ? 'register' : 'login';
+  render();
+}
+
+function submitAuth() {
+  const email = document.getElementById('authEmail')?.value?.trim();
+  const password = document.getElementById('authPassword')?.value;
+  const errEl = document.getElementById('authError');
+  const isZh = getLang() === 'zh';
+
+  // Validate email
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errEl.textContent = t('auth_err_email');
+    return;
+  }
+
+  // Validate password
+  if (!password || password.length < 8) {
+    errEl.textContent = t('auth_err_password');
+    return;
+  }
+
+  if (authMode === 'register') {
+    const name = document.getElementById('authName')?.value?.trim();
+    const confirmPw = document.getElementById('authConfirmPw')?.value;
+
+    if (!name) { errEl.textContent = t('auth_err_name'); return; }
+    if (password !== confirmPw) { errEl.textContent = t('auth_err_confirm'); return; }
+
+    const result = doRegister(name, email, password);
+    if (!result.ok) { errEl.textContent = t(result.key); return; }
+
+    showToast(t('auth_success_register'));
+    currentPage = 'home';
+    render();
+  } else {
+    const result = doLogin(email, password);
+    if (!result.ok) { errEl.textContent = t(result.key); return; }
+
+    showToast(t('auth_success_login'));
+    currentPage = 'home';
+    render();
+  }
+}
+
+function socialLogin(provider) {
+  // Redirect to OAuth endpoint
+  if (provider === 'google') {
+    window.location.href = '/auth/google';
+  } else if (provider === 'wechat') {
+    window.location.href = '/auth/wechat';
+  }
+}
+
+// ==========================
+// HOME PAGE
+// ==========================
+function renderHome() {
+  const cities = [
+    { slug: 'shanghai', gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', tags: ['Modern', 'Food', 'Nightlife'], descKey: 'shanghai_desc' },
+    { slug: 'beijing', gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', tags: ['History', 'Culture', 'Great Wall'], descKey: 'beijing_desc' },
+    { slug: 'chengdu', gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', tags: ['Pandas', 'Spicy Food', 'Tea'], descKey: 'chengdu_desc' },
+    { slug: 'xian', gradient: 'linear-gradient(135deg, #f5af19 0%, #f12711 100%)', tags: ['Terracotta', 'Silk Road', 'History'], descKey: 'xian_desc' },
+    { slug: 'hangzhou', gradient: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)', tags: ['West Lake', 'Tea', 'Nature'], descKey: 'hangzhou_desc' },
+    { slug: 'guangzhou', gradient: 'linear-gradient(135deg, #ee9ca7 0%, #ffdde1 100%)', tags: ['Dim Sum', 'Canton Tower', 'Culture'], descKey: 'guangzhou_desc' },
+  ];
+
+  const suggestions = [
+    { key: 'home_sug_1', icon: '🍜' },
+    { key: 'home_sug_2', icon: '📱' },
+    { key: 'home_sug_3', icon: '🏯' },
+    { key: 'home_sug_4', icon: '🍵' },
+  ];
+
+  return `
+    <div class="page">
+      <div style="margin-bottom:28px">
+        <div class="search-bar">
+          <input type="text" placeholder="${t('home_search')}" onfocus="navigate('chat')" readonly>
+          <span class="search-icon">🔍</span>
+        </div>
+      </div>
+      <div class="quick-actions">
+        <div class="action-card" onclick="navigate('translate')">
+          <div class="action-icon blue">🌐</div>
+          <div class="action-text"><div class="action-title">${t('home_quick_translate')}</div><div class="action-desc">${t('home_quick_translate_desc')}</div></div>
+        </div>
+        <div class="action-card" onclick="navigate('chat')">
+          <div class="action-icon green">🤖</div>
+          <div class="action-text"><div class="action-title">${t('home_ai_chat')}</div><div class="action-desc">${t('home_ai_chat_desc')}</div></div>
+        </div>
+        <div class="action-card" onclick="showToast(getLang() === 'zh' ? '即将推出' : 'Coming soon')">
+          <div class="action-icon orange">📸</div>
+          <div class="action-text"><div class="action-title">${t('home_camera')}</div><div class="action-desc">${t('home_camera_desc')}</div></div>
+        </div>
+        <div class="action-card" onclick="navigate('phrases')">
+          <div class="action-icon purple">📖</div>
+          <div class="action-text"><div class="action-title">${t('home_phrases')}</div><div class="action-desc">${t('home_phrases_desc')}</div></div>
+        </div>
+      </div>
+      <div class="section-header"><h2>${t('home_featured')}</h2><button class="see-all">${t('home_see_all')} →</button></div>
+      <div class="city-grid">
+        ${cities.map(city => `
+          <div class="city-card" onclick="navigate('city', '${city.slug}')">
+            <div class="city-cover" style="background:${city.gradient}">
+              <span class="city-badge">${t('city_offline')}</span>
+              <span class="city-name">${t(city.slug + '_name')}</span>
+            </div>
+            <div class="city-info">
+              <div class="city-desc">${t(city.descKey).substring(0, 80)}...</div>
+              <div class="city-tags">${city.tags.map(tag => `<span class="city-tag">${tag}</span>`).join('')}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="section-header"><h2>${t('home_suggestions')}</h2></div>
+      <div class="suggestions-grid">
+        ${suggestions.map(s => `<div class="suggestion-card" onclick="navigate('chat')"><span class="sug-icon">${s.icon}</span><span class="sug-text">${t(s.key)}</span></div>`).join('')}
+      </div>
+    </div>
+  `;
+}
+
+// ==========================
+// API Functions
+// ==========================
+async function callChatAPI(messages) {
+  try {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages })
+    });
+    const data = await response.json();
+    if (data.error) throw new Error(data.error);
+    return data.content;
+  } catch (e) {
+    console.error('Chat API error:', e);
+    throw e;
+  }
+}
+
+async function callTranslateAPI(text, from, to) {
+  try {
+    const response = await fetch('/api/translate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, from, to })
+    });
+    const data = await response.json();
+    if (data.error) throw new Error(data.error);
+    return data;
+  } catch (e) {
+    console.error('Translate API error:', e);
+    throw e;
+  }
+}
+
+// Web Speech API TTS
+function speakText(text, lang = 'zh-CN') {
+  if (!('speechSynthesis' in window)) {
+    showToast(getLang() === 'zh' ? '浏览器不支持语音功能' : 'Speech not supported');
+    return;
+  }
+  
+  // Cancel any ongoing speech
+  window.speechSynthesis.cancel();
+  
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = lang;
+  utterance.rate = 0.9;
+  utterance.pitch = 1;
+  
+  // Try to find a voice for the language
+  const voices = window.speechSynthesis.getVoices();
+  const voice = voices.find(v => v.lang.startsWith(lang.split('-')[0]));
+  if (voice) utterance.voice = voice;
+  
+  utterance.onerror = () => {
+    showToast(getLang() === 'zh' ? '语音播放失败' : 'Speech failed');
+  };
+  
+  window.speechSynthesis.speak(utterance);
+}
+
+// ==========================
+// CHAT PAGE
+// ==========================
+function renderChat() {
+  if (chatMessages.length === 0) chatMessages = [{ role: 'assistant', content: t('chat_welcome') }];
+  const suggestions = [t('chat_suggest_1'), t('chat_suggest_2'), t('chat_suggest_3'), t('chat_suggest_4')];
+
+  return `
+    <div class="page chat-layout" id="chat-page">
+      <div class="chat-sidebar">
+        <div class="chat-sidebar-header">
+          <h3>${getLang() === 'zh' ? '对话历史' : 'History'}</h3>
+          <button class="btn btn-primary btn-sm" onclick="startNewChat()" style="padding:4px 12px;font-size:12px">+ ${getLang() === 'zh' ? '新对话' : 'New'}</button>
+        </div>
+        <div class="chat-history">
+          ${chatHistory.map(h => `
+            <div class="chat-history-item ${currentChatId === h.id ? 'active' : ''}" onclick="loadChat('${h.id}')">
+              <div style="flex:1;overflow:hidden">
+                <div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${h.title}</div>
+                <div class="ch-time">${new Date(h.updatedAt).toLocaleDateString()}</div>
+              </div>
+              <button onclick="deleteChat('${h.id}', event)" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:14px;padding:2px 4px;flex-shrink:0" title="Delete">×</button>
+            </div>
+          `).join('')}
+          ${chatHistory.length === 0 ? `<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:13px">${getLang() === 'zh' ? '暂无历史对话' : 'No chat history yet'}</div>` : ''}
+        </div>
+      </div>
+      <div class="chat-main">
+        <div class="chat-messages" id="chatMessages">
+          ${chatMessages.map(msg => renderChatMsg(msg)).join('')}
+          ${chatMessages.length <= 1 ? `<div class="suggestion-chips">${suggestions.map(s => `<button class="suggestion-chip" onclick="sendChat('${s.replace(/'/g, "\\'")}')">${s}</button>`).join('')}</div>` : ''}
+        </div>
+        <div class="chat-input-bar">
+          <textarea id="chatInput" rows="1" placeholder="${t('chat_placeholder')}" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatFromInput()}"></textarea>
+          <button class="send-btn" onclick="sendChatFromInput()">➤</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderChatMsg(msg) {
+  if (msg.loading) return `<div class="chat-msg assistant"><div class="chat-avatar">🤖</div><div class="chat-bubble"><div class="typing-indicator"><span></span><span></span><span></span></div></div></div>`;
+  return `<div class="chat-msg ${msg.role}"><div class="chat-avatar">${msg.role === 'user' ? '🧑' : '🤖'}</div><div class="chat-bubble">${formatMsg(msg.content)}</div></div>`;
+}
+
+function formatMsg(c) { return c.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>').replace(/•/g, '&bull;'); }
+function sendChatFromInput() { const i = document.getElementById('chatInput'); if (!i || !i.value.trim()) return; sendChat(i.value.trim()); i.value = ''; }
+function newChat() { chatMessages = []; render(); }
+
+async function sendChat(message) {
+  if (!currentChatId) currentChatId = 'chat_' + Date.now();
+  chatMessages.push({ role: 'user', content: message });
+  chatMessages.push({ role: 'assistant', content: '', loading: true });
+  render();
+  scrollChatToBottom();
+  
+  try {
+    const aiMessages = chatMessages
+      .filter(m => !m.loading)
+      .map(m => ({ role: m.role, content: m.content }));
+    
+    const systemPrompt = getLang() === 'zh' 
+      ? `你是 TravelMate AI，一个专为中国游客提供帮助的旅行助手。你的专长包括：行程规划、美食推荐、交通指引、翻译帮助、文化介绍。请用中文回答，语气友好专业。`
+      : `You are TravelMate AI, a travel assistant helping visitors to China. Your expertise includes: trip planning, food recommendations, transport guidance, translation help, and culture introduction. Be friendly and professional.`;
+    
+    const response = await callChatAPI([
+      { role: 'system', content: systemPrompt },
+      ...aiMessages.slice(-10)
+    ]);
+    
+    const loadingIdx = chatMessages.findIndex(m => m.loading);
+    if (loadingIdx !== -1) {
+      chatMessages[loadingIdx] = { role: 'assistant', content: response };
+    }
+  } catch (e) {
+    const loadingIdx = chatMessages.findIndex(m => m.loading);
+    if (loadingIdx !== -1) {
+      chatMessages[loadingIdx] = { 
+        role: 'assistant', 
+        content: getLang() === 'zh' 
+          ? '抱歉，AI 服务暂时不可用，请稍后重试。' 
+          : 'Sorry, AI service is temporarily unavailable. Please try again later.' 
+      };
+    }
+  }
+  
+  saveCurrentChat();
+  render();
+  scrollChatToBottom();
+}
+
+function scrollChatToBottom() {
+  setTimeout(() => { 
+    const el = document.getElementById('chatMessages'); 
+    if (el) el.scrollTop = el.scrollHeight; 
+  }, 50);
+}
+
+// ==========================
+// TRANSLATE PAGE
+// ==========================
+function renderTranslate() {
+  return `
+    <div class="page">
+      <div class="translate-layout">
+        <div class="translate-panel">
+          <div class="lang-bar"><select id="fromLang"><option value="en">${t('lang_en')}</option><option value="zh">${t('lang_zh')}</option></select></div>
+          <div class="panel-body">
+            <textarea id="translateInput" placeholder="${t('translate_input_placeholder')}">${translateInputText}</textarea>
+            <button class="translate-btn" onclick="doTranslate()">${t('translate_btn')}</button>
+          </div>
+        </div>
+        <div class="translate-panel">
+          <div class="lang-bar">
+            <select id="toLang"><option value="zh">${t('lang_zh')}</option><option value="en">${t('lang_en')}</option></select>
+            <button class="swap-btn" onclick="swapLangs()" title="${t('translate_swap')}">⇄</button>
+          </div>
+          <div class="panel-body">
+            ${translateResult ? `
+              <div class="result-text">${translateResult.text}</div>
+              ${translateResult.pinyin ? `<div class="pinyin-text">${translateResult.pinyin}</div>` : ''}
+              <div class="translate-actions">
+                <button onclick="copyResult()">📋 ${t('translate_copy')}</button>
+                <button onclick="showFullscreen()">🔍 ${t('translate_fullscreen')}</button>
+                <button onclick="speakTranslation()">🔊 ${t('translate_audio')}</button>
+                <button onclick="showToast('${getLang() === 'zh' ? '已保存' : 'Saved!'}')">⭐ ${t('translate_save')}</button>
+              </div>
+            ` : `<div class="empty-state"><div class="empty-icon">🌐</div><h3>${getLang() === 'zh' ? '输入文字开始翻译' : 'Enter text to translate'}</h3><p>${getLang() === 'zh' ? '支持中英文互译' : 'Supports Chinese ↔ English'}</p></div>`}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+async function doTranslate() {
+  const input = document.getElementById('translateInput');
+  if (!input || !input.value.trim()) return;
+  
+  const text = input.value.trim();
+  translateInputText = text;
+  const fromLang = document.getElementById('fromLang').value;
+  const toLang = document.getElementById('toLang').value;
+  translateFromLang = fromLang;
+  translateToLang = toLang;
+  
+  translateResult = { text: '...', pinyin: null };
+  render();
+  
+  try {
+    const result = await callTranslateAPI(text, fromLang, toLang);
+    translateResult = result;
+  } catch (e) {
+    translateResult = { 
+      text: getLang() === 'zh' ? '翻译失败，请重试' : 'Translation failed, please try again',
+      pinyin: null 
+    };
+  }
+  render();
+}
+
+function speakTranslation() {
+  if (!translateResult || !translateResult.text) return;
+  const toLang = document.getElementById('toLang').value;
+  const lang = toLang === 'zh' ? 'zh-CN' : 'en-US';
+  speakText(translateResult.text, lang);
+}
+
+function swapLangs() { 
+  const f = document.getElementById('fromLang'), t2 = document.getElementById('toLang'); 
+  const tmp = f.value; 
+  f.value = t2.value; 
+  t2.value = tmp; 
+}
+function copyResult() { 
+  if (translateResult) { 
+    navigator.clipboard?.writeText(translateResult.text).catch(() => {}); 
+    showToast(t('translate_copied')); 
+  } 
+}
+function showFullscreen() { 
+  if (!translateResult) return; 
+  const ov = document.createElement('div'); 
+  ov.className = 'fullscreen-overlay'; 
+  ov.id = 'fullscreenOverlay'; 
+  ov.innerHTML = `<button class="fs-close" onclick="closeFullscreen()">✕</button><div class="fs-text">${translateResult.text}</div>${translateResult.pinyin ? `<div class="fs-pinyin">${translateResult.pinyin}</div>` : ''}`; 
+  ov.onclick = e => { if (e.target === ov) closeFullscreen(); }; 
+  document.body.appendChild(ov); 
+}
+function closeFullscreen() { document.getElementById('fullscreenOverlay')?.remove(); document.getElementById('modelFormOverlay')?.remove(); }
+
+// ==========================
+// CITY PAGE
+// ==========================
+function renderCity() {
+  const city = currentCity || 'shanghai';
+  const allCities = ['shanghai', 'beijing', 'chengdu', 'xian', 'hangzhou', 'guangzhou'];
+  const cityGradients = {
+    shanghai: '#667eea, #764ba2',
+    beijing: '#f093fb, #f5576c',
+    chengdu: '#4facfe, #00f2fe',
+    xian: '#f5af19, #f12711',
+    hangzhou: '#11998e, #38ef7d',
+    guangzhou: '#ee9ca7, #ffdde1',
+  };
+  const places = {
+    shanghai: [
+      { icon: '🏙️', name: getLang() === 'zh' ? '外滩' : 'The Bund', desc: getLang() === 'zh' ? '上海标志性天际线' : 'Iconic skyline', meta: '⭐ 4.8 · Free' },
+      { icon: '🏮', name: getLang() === 'zh' ? '豫园' : 'Yu Garden', desc: getLang() === 'zh' ? '明代古典园林' : 'Ming Dynasty garden', meta: '⭐ 4.6 · ¥40' },
+      { icon: '🛍️', name: getLang() === 'zh' ? '南京路' : 'Nanjing Road', desc: getLang() === 'zh' ? '繁华购物街' : 'Shopping paradise', meta: '⭐ 4.5 · Free' },
+      { icon: '🌃', name: getLang() === 'zh' ? '新天地' : 'Xintiandi', desc: getLang() === 'zh' ? '时尚餐饮区' : 'Dining & nightlife', meta: '⭐ 4.7 · Free' },
+    ],
+    beijing: [
+      { icon: '🏯', name: getLang() === 'zh' ? '故宫' : 'Forbidden City', desc: getLang() === 'zh' ? '明清皇宫' : 'Imperial palace', meta: '⭐ 4.9 · ¥60' },
+      { icon: '🧱', name: getLang() === 'zh' ? '长城' : 'Great Wall', desc: getLang() === 'zh' ? '世界奇迹' : 'World wonder', meta: '⭐ 4.9 · ¥40' },
+      { icon: '🛕', name: getLang() === 'zh' ? '天坛' : 'Temple of Heaven', desc: getLang() === 'zh' ? '祭天建筑群' : 'Sacrificial complex', meta: '⭐ 4.7 · ¥34' },
+      { icon: '🎨', name: getLang() === 'zh' ? '798艺术区' : '798 Art District', desc: getLang() === 'zh' ? '当代艺术' : 'Contemporary art', meta: '⭐ 4.5 · Free' },
+    ],
+    chengdu: [
+      { icon: '🐼', name: getLang() === 'zh' ? '大熊猫基地' : 'Panda Base', desc: getLang() === 'zh' ? '大熊猫繁育基地' : 'Giant panda center', meta: '⭐ 4.9 · ¥55' },
+      { icon: '🏮', name: getLang() === 'zh' ? '锦里古街' : 'Jinli Street', desc: getLang() === 'zh' ? '古色古香步行街' : 'Ancient street', meta: '⭐ 4.6 · Free' },
+      { icon: '🍵', name: getLang() === 'zh' ? '宽窄巷子' : 'Kuanzhai Alley', desc: getLang() === 'zh' ? '清代老街区' : 'Qing Dynasty lanes', meta: '⭐ 4.7 · Free' },
+      { icon: '🌶️', name: getLang() === 'zh' ? '小龙坎火锅' : 'Hotpot', desc: getLang() === 'zh' ? '正宗四川火锅' : 'Authentic Sichuan', meta: '⭐ 4.8 · ¥120' },
+    ],
+    xian: [
+      { icon: '🗿', name: getLang() === 'zh' ? '兵马俑' : 'Terracotta Army', desc: getLang() === 'zh' ? '世界第八大奇迹' : 'Eighth wonder of the world', meta: '⭐ 4.9 · ¥120' },
+      { icon: '🏯', name: getLang() === 'zh' ? '古城墙' : 'City Wall', desc: getLang() === 'zh' ? '明代古城墙' : 'Ming Dynasty wall', meta: '⭐ 4.7 · ¥54' },
+      { icon: '🕌', name: getLang() === 'zh' ? '回民街' : 'Muslim Quarter', desc: getLang() === 'zh' ? '美食文化街' : 'Food & culture street', meta: '⭐ 4.5 · Free' },
+      { icon: '🔔', name: getLang() === 'zh' ? '钟楼' : 'Bell Tower', desc: getLang() === 'zh' ? '城市地标' : 'City landmark', meta: '⭐ 4.6 · ¥30' },
+    ],
+    hangzhou: [
+      { icon: '🏞️', name: getLang() === 'zh' ? '西湖' : 'West Lake', desc: getLang() === 'zh' ? '世界文化遗产' : 'UNESCO World Heritage', meta: '⭐ 4.9 · Free' },
+      { icon: '🍵', name: getLang() === 'zh' ? '龙井茶园' : 'Longjing Tea Fields', desc: getLang() === 'zh' ? '龙井茶产地' : 'Dragon Well tea origin', meta: '⭐ 4.7 · Free' },
+      { icon: '🏛️', name: getLang() === 'zh' ? '灵隐寺' : 'Lingyin Temple', desc: getLang() === 'zh' ? '千年古刹' : 'Ancient Buddhist temple', meta: '⭐ 4.7 · ¥75' },
+      { icon: '🌉', name: getLang() === 'zh' ? '断桥' : 'Broken Bridge', desc: getLang() === 'zh' ? '西湖十景之一' : 'West Lake scenic spot', meta: '⭐ 4.6 · Free' },
+    ],
+    guangzhou: [
+      { icon: '🗼', name: getLang() === 'zh' ? '广州塔' : 'Canton Tower', desc: getLang() === 'zh' ? '小蛮腰地标' : 'Iconic landmark tower', meta: '⭐ 4.7 · ¥150' },
+      { icon: '🍜', name: getLang() === 'zh' ? '上下九步行街' : 'Shangxiajiu Street', desc: getLang() === 'zh' ? '美食购物街' : 'Food & shopping street', meta: '⭐ 4.5 · Free' },
+      { icon: '🏛️', name: getLang() === 'zh' ? '陈家祠' : 'Chen Clan Ancestral Hall', desc: getLang() === 'zh' ? '岭南建筑瑰宝' : 'Lingnan architecture', meta: '⭐ 4.7 · ¥10' },
+      { icon: '🌳', name: getLang() === 'zh' ? '白云山' : 'Baiyun Mountain', desc: getLang() === 'zh' ? '城市绿肺' : 'City green lung', meta: '⭐ 4.5 · ¥5' },
+    ],
+  };
+
+  return `
+    <div class="page">
+      <div class="city-tabs-bar">
+        ${allCities.map(c => `<button class="city-tab-btn ${city === c ? 'active' : ''}" onclick="navigate('city', '${c}')">${t(c + '_name')}</button>`).join('')}
+      </div>
+      <div class="city-hero" style="background:linear-gradient(135deg, ${cityGradients[city] || cityGradients.shanghai})">
+        <div class="city-hero-content"><h1>${t(city + '_name')}</h1><p>${t(city + '_tagline')}</p></div>
+      </div>
+      <div class="city-detail-grid">
+        <div>
+          <div class="info-card"><h3>📋 ${t('city_overview')}</h3><p>${t(city + '_desc')}</p></div>
+          <div class="section-header" style="margin-top:8px"><h2>📍 ${getLang() === 'zh' ? '热门景点' : 'Top Places'}</h2></div>
+          <div class="place-grid">
+            ${(places[city] || places.shanghai).map(p => `<div class="place-card"><div class="place-icon">${p.icon}</div><div class="place-info"><h4>${p.name}</h4><div class="place-desc">${p.desc}</div><div class="place-meta">${p.meta}</div></div></div>`).join('')}
+          </div>
+          <div class="info-card" style="margin-top:16px"><h3>🎭 ${t('city_culture')}</h3><p>${t(city + '_culture')}</p></div>
+        </div>
+        <div>
+          <div class="info-card"><h3>🌤️ ${t('city_best_season')}</h3><p>${t(city + '_season')}</p></div>
+          <div class="info-card"><h3>🚇 ${t('city_transport')}</h3><p>${t(city + '_transport')}</p></div>
+          <button class="btn btn-primary" style="width:100%;margin-top:8px" onclick="navigate('chat')">🤖 ${t('city_ask_ai')}</button>
+          <button class="btn btn-secondary" style="width:100%;margin-top:8px" onclick="navigate('translate')">🌐 ${t('translate_title')}</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ==========================
+// PHRASES PAGE
+// ==========================
+function renderPhrases() {
+  const categories = [{ key: 'greetings', icon: '👋' }, { key: 'food', icon: '🍜' }, { key: 'transport', icon: '🚇' }, { key: 'shopping', icon: '🛍️' }, { key: 'emergency', icon: '🆘' }, { key: 'hotel', icon: '🏨' }];
+  const data = {
+    greetings: [{ en: t('p_hello_en'), zh: t('p_hello_zh'), pinyin: t('p_hello_pinyin') }, { en: t('p_thank_en'), zh: t('p_thank_zh'), pinyin: t('p_thank_pinyin') }, { en: t('p_bye_en'), zh: t('p_bye_zh'), pinyin: t('p_bye_pinyin') }, { en: t('p_sorry_en'), zh: t('p_sorry_zh'), pinyin: t('p_sorry_pinyin') }, { en: t('p_yesno_en'), zh: t('p_yesno_zh'), pinyin: t('p_yesno_pinyin') }, { en: t('p_understand_en'), zh: t('p_understand_zh'), pinyin: t('p_understand_pinyin') }],
+    food: [{ en: t('p_menu_en'), zh: t('p_menu_zh'), pinyin: t('p_menu_pinyin') }, { en: t('p_bill_en'), zh: t('p_bill_zh'), pinyin: t('p_bill_pinyin') }, { en: t('p_water_en'), zh: t('p_water_zh'), pinyin: t('p_water_pinyin') }, { en: t('p_spicy_en'), zh: t('p_spicy_zh'), pinyin: t('p_spicy_pinyin') }, { en: t('p_veg_en'), zh: t('p_veg_zh'), pinyin: t('p_veg_pinyin') }, { en: t('p_howmuch_en'), zh: t('p_howmuch_zh'), pinyin: t('p_howmuch_pinyin') }],
+    transport: [{ en: t('p_metro_en'), zh: t('p_metro_zh'), pinyin: t('p_metro_pinyin') }, { en: t('p_taxi_en'), zh: t('p_taxi_zh'), pinyin: t('p_taxi_pinyin') }, { en: t('p_airport_en'), zh: t('p_airport_zh'), pinyin: t('p_airport_pinyin') }],
+    shopping: [{ en: t('p_howmuch_en'), zh: t('p_howmuch_zh'), pinyin: t('p_howmuch_pinyin') }, { en: getLang() === 'zh' ? '太贵了' : 'Too expensive', zh: '太贵了', pinyin: 'Tài guì le' }, { en: getLang() === 'zh' ? '可以便宜点吗' : 'Can you make it cheaper?', zh: '可以便宜点吗', pinyin: 'Kěyǐ piányi diǎn ma?' }],
+    emergency: [{ en: t('p_help_urgent_en'), zh: t('p_help_urgent_zh'), pinyin: t('p_help_urgent_pinyin') }, { en: t('p_hospital_en'), zh: t('p_hospital_zh'), pinyin: t('p_hospital_pinyin') }, { en: t('p_help_en'), zh: t('p_help_zh'), pinyin: t('p_help_pinyin') }],
+    hotel: [{ en: t('p_hotel_en'), zh: t('p_hotel_zh'), pinyin: t('p_hotel_pinyin') }, { en: t('p_wifi_en'), zh: t('p_wifi_zh'), pinyin: t('p_wifi_pinyin') }, { en: getLang() === 'zh' ? '退房时间是几点' : 'What time is checkout?', zh: '退房时间是几点', pinyin: 'Tuìfáng shíjiān shì jǐ diǎn?' }],
+  };
+  const phrases = data[currentPhraseCat] || data.greetings;
+
+  return `
+    <div class="page"><div class="phrases-layout">
+      <div class="phrase-cats-sidebar">${categories.map(cat => `<button class="phrase-cat-item ${currentPhraseCat === cat.key ? 'active' : ''}" onclick="currentPhraseCat='${cat.key}';render()"><span class="cat-icon">${cat.icon}</span><span>${t('phrases_' + cat.key)}</span></button>`).join('')}</div>
+      <div class="phrase-grid">${phrases.map(p => `<div class="phrase-card" onclick="showPhraseFull('${p.zh.replace(/'/g, "\\'")}', '${p.pinyin.replace(/'/g, "\\'")}')"><div class="phrase-en">${p.en}</div><div class="phrase-zh">${p.zh}</div><div class="phrase-pinyin">${p.pinyin}</div><div class="phrase-actions"><button onclick="event.stopPropagation();speakPhrase('${p.zh.replace(/'/g, "\\'")}', '${p.en.replace(/'/g, "\\'")}')">🔊 ${getLang() === 'zh' ? '听' : 'Listen'}</button><button onclick="event.stopPropagation();copyToClipboard('${p.zh.replace(/'/g, "\\'")}')">📋 ${getLang() === 'zh' ? '复制' : 'Copy'}</button></div></div>`).join('')}</div>
+    </div></div>
+  `;
+}
+
+function showPhraseFull(zh, pinyin) { 
+  const ov = document.createElement('div'); 
+  ov.className = 'fullscreen-overlay'; 
+  ov.id = 'fullscreenOverlay'; 
+  ov.innerHTML = `<button class="fs-close" onclick="closeFullscreen()">✕</button>
+    <button class="fs-speak-btn" onclick="speakText('${zh.replace(/'/g, "\\'")}', 'zh-CN')" style="position:absolute;top:60px;right:20px;background:var(--primary);color:white;border:none;padding:10px 20px;border-radius:20px;cursor:pointer;font-size:16px">🔊 ${getLang() === 'zh' ? '朗读' : 'Speak'}</button>
+    <div class="fs-text">${zh}</div><div class="fs-pinyin">${pinyin}</div>`; 
+  ov.onclick = e => { if (e.target === ov) closeFullscreen(); }; 
+  document.body.appendChild(ov); 
+}
+
+function speakPhrase(zh, en) {
+  // Speak Chinese by default, but we can detect language
+  const lang = /[\u4e00-\u9fa5]/.test(zh) ? 'zh-CN' : 'en-US';
+  speakText(zh, lang);
+}
+
+function copyToClipboard(text) {
+  navigator.clipboard?.writeText(text).catch(() => {});
+  showToast(getLang() === 'zh' ? '已复制' : 'Copied!');
+}
+
+// ==========================
+// PROFILE PAGE
+// ==========================
+function renderProfile() {
+  const user = getAuthUser();
+  const isZh = getLang() === 'zh';
+
+  if (!user) {
+    return `
+      <div class="page" style="display:flex;justify-content:center;padding-top:60px">
+        <div style="text-align:center;max-width:400px">
+          <div style="font-size:64px;margin-bottom:16px">🔒</div>
+          <h2 style="font-size:24px;font-weight:800;margin-bottom:8px">${isZh ? '请先登录' : 'Sign in to continue'}</h2>
+          <p style="color:var(--text-muted);margin-bottom:24px">${isZh ? '登录后可以保存翻译、对话记录和个性化推荐' : 'Save translations, chat history, and get personalized recommendations'}</p>
+          <button class="btn btn-primary" style="padding:12px 40px;font-size:16px;border-radius:24px" onclick="authMode='login';navigate('auth')">${t('auth_sign_in')}</button>
+          <div style="margin-top:12px;font-size:14px;color:var(--text-secondary)">${t('auth_no_account')} <button style="color:var(--primary);font-weight:600" onclick="authMode='register';navigate('auth')">${t('auth_sign_up')}</button></div>
+        </div>
+      </div>
+    `;
+  }
+
+  const joinedDate = user.joinedAt ? new Date(user.joinedAt).toLocaleDateString(getLang() === 'zh' ? 'zh-CN' : 'en-US', { year: 'numeric', month: 'long' }) : '-';
+
+  return `
+    <div class="page">
+      <div class="profile-layout">
+        <div class="profile-sidebar card" style="padding:32px 20px">
+          <div class="profile-avatar">${user.avatar || user.name.charAt(0).toUpperCase()}</div>
+          <h2>${user.name}${isAdmin(user) ? ' <span style="font-size:12px;background:var(--primary);color:white;padding:2px 8px;border-radius:10px;font-weight:600;vertical-align:middle">Admin</span>' : ''}</h2>
+          <p style="font-size:13px;color:var(--text-muted);margin-bottom:4px">${user.email}</p>
+          <p style="font-size:12px;color:var(--text-muted)">${t('profile_joined')}: ${joinedDate}</p>
+          ${user.provider ? `<div style="margin-top:8px"><span class="status-badge enabled">${user.provider === 'google' ? 'Google' : 'WeChat'}</span></div>` : ''}
+        </div>
+        <div>
+          <!-- Account Info -->
+          <div class="profile-card">
+            <div class="card-header" style="padding:16px 20px"><h3 style="font-size:16px;font-weight:700">${t('profile_account')}</h3></div>
+            <div class="profile-item">
+              <div class="item-icon" style="background:var(--primary-bg)">📧</div>
+              <div class="item-info"><h4>${t('profile_email')}</h4><p>${user.email}</p></div>
+            </div>
+            <div class="profile-item">
+              <div class="item-icon" style="background:var(--accent-bg)">👤</div>
+              <div class="item-info"><h4>${t('auth_name')}</h4><p>${user.name}</p></div>
+            </div>
+            <div class="profile-item" onclick="showToast('${isZh ? '编辑功能开发中' : 'Edit coming soon'}')">
+              <div class="item-icon" style="background:#FFF7E6">✏️</div>
+              <div class="item-info"><h4>${t('profile_edit')}</h4><p>${isZh ? '修改昵称和头像' : 'Change name & avatar'}</p></div>
+              <span class="item-arrow">→</span>
+            </div>
+          </div>
+
+          <!-- Subscription -->
+          <div class="profile-card">
+            <div class="profile-item">
+              <div class="item-icon" style="background:#FFF7E6">💎</div>
+              <div class="item-info"><h4>${t('profile_subscription')}</h4><p>${t('profile_free_plan')}</p><div class="usage-bar"><div class="usage-fill" style="width:30%"></div></div></div>
+            </div>
+            <div style="padding:0 20px 20px"><button class="btn btn-primary" style="width:100%" onclick="showToast('${isZh ? '订阅功能即将推出' : 'Subscription coming soon'}')">⭐ ${t('profile_upgrade')}</button></div>
+          </div>
+
+          <!-- Usage -->
+          <div class="profile-card">
+            <div class="profile-item">
+              <div class="item-icon" style="background:var(--primary-bg)">📊</div>
+              <div class="item-info"><h4>${t('profile_usage')}</h4><p>${t('profile_ai_requests')}: 3/10</p><div class="usage-bar"><div class="usage-fill" style="width:30%"></div></div></div>
+            </div>
+            <div class="profile-item">
+              <div class="item-icon" style="background:var(--accent-bg)">🌐</div>
+              <div class="item-info"><h4>${t('profile_translations')}</h4><p>5/20</p><div class="usage-bar"><div class="usage-fill" style="width:25%;background:var(--accent)"></div></div></div>
+            </div>
+          </div>
+
+          <!-- Security -->
+          <div class="profile-card">
+            <div class="card-header" style="padding:16px 20px"><h3 style="font-size:16px;font-weight:700">${t('profile_security')}</h3></div>
+            <div class="profile-item" onclick="showToast('${isZh ? '密码修改功能开发中' : 'Password change coming soon'}')">
+              <div class="item-icon" style="background:#F5EDFF">🔐</div>
+              <div class="item-info"><h4>${t('profile_change_pw')}</h4></div>
+              <span class="item-arrow">→</span>
+            </div>
+            ${isAdmin(user) ? `
+            <div class="profile-item" onclick="navigate('admin')">
+              <div class="item-icon" style="background:#E6F7FF">⚙️</div>
+              <div class="item-info"><h4>${isZh ? '管理后台' : 'Admin Panel'}</h4><p>${isZh ? '配置API、模型和提示词' : 'Configure APIs, models & prompts'}</p></div>
+              <span class="item-arrow">→</span>
+            </div>
+            ` : ''}
+          </div>
+
+          <!-- Logout -->
+          <div style="margin-top:8px">
+            <button class="btn btn-danger" style="width:100%" onclick="confirmLogout()">🚪 ${t('auth_logout')}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function confirmLogout() {
+  if (confirm(t('auth_logout_confirm'))) doLogout();
+}
+
+// ==========================
+// ADMIN PAGE
+// ==========================
+function renderAdmin() {
+  // Admin guard - redirect non-admin users
+  const user = getAuthUser();
+  if (!user || !isAdmin(user)) {
+    navigate('home');
+    showToast(getLang() === 'zh' ? '需要管理员权限' : 'Admin access required');
+    return '';
+  }
+
+  const tabs = [
+    { key: 'models', icon: '🤖', label: getLang() === 'zh' ? '模型配置' : 'AI Models' },
+    { key: 'prompts', icon: '📝', label: getLang() === 'zh' ? '提示词' : 'Prompts' },
+    { key: 'usage', icon: '📊', label: getLang() === 'zh' ? '用量统计' : 'Usage' },
+  ];
+  return `<div class="page"><div class="admin-layout"><div class="admin-sidebar">${tabs.map(tab => `<button class="admin-nav-item ${currentAdminTab === tab.key ? 'active' : ''}" onclick="currentAdminTab='${tab.key}';render()"><span>${tab.icon}</span><span>${tab.label}</span></button>`).join('')}</div><div class="admin-main">${currentAdminTab === 'models' ? renderAdminModels() : ''}${currentAdminTab === 'prompts' ? renderAdminPrompts() : ''}${currentAdminTab === 'usage' ? renderAdminUsage() : ''}</div></div></div>`;
+}
+
+function renderAdminModels() {
+  const isZh = getLang() === 'zh';
+  return `
+    <div style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center"><h3 style="font-size:18px;font-weight:700">${isZh ? 'AI 模型配置' : 'AI Model Configuration'}</h3><button class="btn btn-primary btn-sm" onclick="showAddModelForm()">+ ${isZh ? '添加模型' : 'Add Model'}</button></div>
+    <table class="admin-table"><thead><tr><th>${isZh ? '服务商' : 'Provider'}</th><th>${isZh ? '模型' : 'Model'}</th><th>${isZh ? '状态' : 'Status'}</th><th>${isZh ? '优先级' : 'Priority'}</th><th>Streaming</th><th>Vision</th><th>${isZh ? '操作' : 'Actions'}</th></tr></thead><tbody>${adminModels.map(m => `<tr><td><strong>${m.provider}</strong></td><td><code style="background:var(--bg);padding:2px 8px;border-radius:4px;font-size:13px">${m.modelKey}</code></td><td><span class="status-badge ${m.isEnabled ? 'enabled' : 'disabled'}">${m.isEnabled ? (isZh ? '已启用' : 'Enabled') : (isZh ? '已禁用' : 'Disabled')}</span></td><td>${m.priority}</td><td>${m.supportsStreaming ? '✅' : '❌'}</td><td>${m.supportsVision ? '✅' : '❌'}</td><td><div class="btn-group"><button class="btn btn-secondary btn-sm" onclick="editModel('${m.id}')">${isZh ? '编辑' : 'Edit'}</button><button class="btn ${m.isEnabled ? 'btn-danger' : 'btn-primary'} btn-sm" onclick="toggleModel('${m.id}')">${m.isEnabled ? (isZh ? '禁用' : 'Disable') : (isZh ? '启用' : 'Enable')}</button></div></td></tr>`).join('')}</tbody></table>`;
+}
+
+function renderAdminPrompts() {
+  const isZh = getLang() === 'zh';
+  return `<div style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center"><h3 style="font-size:18px;font-weight:700">${isZh ? '提示词管理' : 'Prompt Management'}</h3><button class="btn btn-primary btn-sm" onclick="showToast('${isZh ? '新建提示词功能开发中' : 'New prompt coming soon'}')">+ ${isZh ? '新建提示词' : 'New Prompt'}</button></div><table class="admin-table"><thead><tr><th>${isZh ? '场景' : 'Scene'}</th><th>${isZh ? '名称' : 'Name'}</th><th>${isZh ? '语言' : 'Lang'}</th><th>${isZh ? '版本' : 'Version'}</th><th>${isZh ? '状态' : 'Status'}</th><th>${isZh ? '操作' : 'Actions'}</th></tr></thead><tbody>${adminPrompts.map(p => `<tr><td><code style="background:var(--bg);padding:2px 8px;border-radius:4px;font-size:13px">${p.sceneCode}</code></td><td><strong>${p.name}</strong></td><td>${p.language === 'en' ? '🇺🇸 EN' : '🇨🇳 中文'}</td><td>v${p.version}</td><td><span class="status-badge ${p.isPublished ? 'enabled' : 'disabled'}">${p.isPublished ? (isZh ? '已发布' : 'Published') : (isZh ? '草稿' : 'Draft')}</span></td><td><div class="btn-group"><button class="btn btn-secondary btn-sm" onclick="showToast('${isZh ? '编辑功能开发中' : 'Edit coming soon'}')">${isZh ? '编辑' : 'Edit'}</button><button class="btn ${p.isPublished ? 'btn-danger' : 'btn-primary'} btn-sm" onclick="showToast('${isZh ? '操作成功' : 'Done'}')">${p.isPublished ? (isZh ? '下线' : 'Unpublish') : (isZh ? '发布' : 'Publish')}</button></div></td></tr>`).join('')}</tbody></table>`;
+}
+
+function renderAdminUsage() {
+  const isZh = getLang() === 'zh';
+  return `<h3 style="font-size:18px;font-weight:700;margin-bottom:16px">${isZh ? 'API 用量统计' : 'API Usage Statistics'}</h3><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px"><div class="card" style="padding:20px;text-align:center"><div style="font-size:32px;font-weight:800;color:var(--primary)">1,247</div><div style="font-size:13px;color:var(--text-muted);margin-top:4px">${isZh ? '今日请求' : "Today's Requests"}</div></div><div class="card" style="padding:20px;text-align:center"><div style="font-size:32px;font-weight:800;color:var(--accent)">98.5%</div><div style="font-size:13px;color:var(--text-muted);margin-top:4px">${isZh ? '成功率' : 'Success Rate'}</div></div><div class="card" style="padding:20px;text-align:center"><div style="font-size:32px;font-weight:800;color:var(--warning)">$12.36</div><div style="font-size:13px;color:var(--text-muted);margin-top:4px">${isZh ? '今日花费' : "Today's Cost"}</div></div></div><table class="admin-table"><thead><tr><th>${isZh ? '模型' : 'Model'}</th><th>${isZh ? '请求数' : 'Requests'}</th><th>${isZh ? 'Token用量' : 'Tokens'}</th><th>${isZh ? '平均延迟' : 'Avg Latency'}</th><th>${isZh ? '花费' : 'Cost'}</th></tr></thead><tbody><tr><td><strong>GPT-4o</strong></td><td>523</td><td>1.2M</td><td>1.8s</td><td>$8.42</td></tr><tr><td><strong>GPT-4o-mini</strong></td><td>489</td><td>2.1M</td><td>0.6s</td><td>$2.15</td></tr><tr><td><strong>Claude Sonnet</strong></td><td>235</td><td>890K</td><td>2.1s</td><td>$1.79</td></tr></tbody></table>`;
+}
+
+function showAddModelForm() {
+  const isZh = getLang() === 'zh';
+  const overlay = document.createElement('div');
+  overlay.className = 'fullscreen-overlay'; overlay.id = 'modelFormOverlay';
+  overlay.style.background = 'rgba(0,0,0,0.5)'; overlay.style.justifyContent = 'flex-start'; overlay.style.padding = '60px 20px'; overlay.style.overflowY = 'auto';
+  overlay.innerHTML = `<div class="admin-form" style="max-width:640px;width:100%;margin:0 auto" onclick="event.stopPropagation()"><h3>${isZh ? '添加 AI 模型' : 'Add AI Model'}</h3><div class="form-row"><div class="form-group"><label>${isZh ? '服务商' : 'Provider'} *</label><select id="formProvider"><option value="OpenAI">OpenAI</option><option value="Anthropic">Anthropic</option><option value="DeepSeek">DeepSeek</option><option value="百度文心">百度文心 (ERNIE)</option><option value="阿里通义">阿里通义 (Qwen)</option><option value="智谱AI">智谱AI (GLM)</option><option value="Moonshot">Moonshot (Kimi)</option><option value="Custom">${isZh ? '自定义' : 'Custom'}</option></select></div><div class="form-group"><label>${isZh ? '模型标识' : 'Model Key'} *</label><input type="text" id="formModelKey" placeholder="e.g. gpt-4o, deepseek-chat"></div></div><div class="form-group"><label>${isZh ? 'API 地址' : 'API Base URL'} *</label><input type="text" id="formApiBase" placeholder="https://api.openai.com/v1"><div class="form-hint">${isZh ? '服务商的 API 接口地址' : 'The API endpoint URL'}</div></div><div class="form-group"><label>API Key *</label><input type="password" id="formApiKey" placeholder="sk-xxxxxxxx"><div class="form-hint">${isZh ? '密钥将加密存储，不会明文显示' : 'Stored encrypted, never shown in plain text'}</div></div><div class="form-row"><div class="form-group"><label>${isZh ? '超时(ms)' : 'Timeout (ms)'}</label><input type="number" id="formTimeout" value="30000"></div><div class="form-group"><label>${isZh ? '最大Token' : 'Max Tokens'}</label><input type="number" id="formMaxTokens" value="4096"></div></div><div class="form-row"><div class="form-group"><label>${isZh ? '温度' : 'Temperature'}</label><input type="number" id="formTemp" value="0.7" step="0.1" min="0" max="2"></div><div class="form-group"><label>${isZh ? '优先级' : 'Priority'}</label><input type="number" id="formPriority" value="1" min="1" max="99"><div class="form-hint">${isZh ? '数字越小优先级越高' : 'Lower = higher priority'}</div></div></div><div class="form-row" style="margin-bottom:24px"><div class="form-group" style="display:flex;align-items:center;gap:12px"><label class="toggle"><input type="checkbox" id="formStreaming" checked><span class="slider"></span></label><span style="font-size:14px">${isZh ? '支持流式输出' : 'Supports Streaming'}</span></div><div class="form-group" style="display:flex;align-items:center;gap:12px"><label class="toggle"><input type="checkbox" id="formVision"><span class="slider"></span></label><span style="font-size:14px">${isZh ? '支持视觉(图片)' : 'Supports Vision'}</span></div></div><div style="display:flex;gap:12px;justify-content:flex-end;padding-top:16px;border-top:1px solid var(--border)"><button class="btn btn-secondary" onclick="closeFullscreen()">${isZh ? '取消' : 'Cancel'}</button><button class="btn btn-primary" onclick="saveModel()">${isZh ? '保存并启用' : 'Save & Enable'}</button></div></div>`;
+  overlay.onclick = () => closeFullscreen();
+  document.body.appendChild(overlay);
+}
+
+function editModel(id) {
+  const model = adminModels.find(m => m.id === id);
+  if (!model) return;
+  showAddModelForm();
+  setTimeout(() => {
+    document.getElementById('formProvider').value = model.provider;
+    document.getElementById('formModelKey').value = model.modelKey;
+    document.getElementById('formApiBase').value = model.apiBase;
+    document.getElementById('formTimeout').value = model.timeoutMs;
+    document.getElementById('formMaxTokens').value = model.maxTokens;
+    document.getElementById('formTemp').value = model.temperature;
+    document.getElementById('formPriority').value = model.priority;
+    document.getElementById('formStreaming').checked = model.supportsStreaming;
+    document.getElementById('formVision').checked = model.supportsVision;
+    document.getElementById('modelFormOverlay').dataset.editId = id;
+  }, 50);
+}
+
+function toggleModel(id) { const m = adminModels.find(x => x.id === id); if (m) { m.isEnabled = !m.isEnabled; showToast(m.isEnabled ? (getLang() === 'zh' ? '已启用' : 'Enabled') : (getLang() === 'zh' ? '已禁用' : 'Disabled')); render(); } }
+
+function saveModel() {
+  const provider = document.getElementById('formProvider').value, modelKey = document.getElementById('formModelKey').value, apiBase = document.getElementById('formApiBase').value;
+  if (!modelKey || !apiBase) { showToast(getLang() === 'zh' ? '请填写必填项' : 'Please fill required fields'); return; }
+  const overlay = document.getElementById('modelFormOverlay'), editId = overlay?.dataset.editId;
+  const data = { provider, modelKey, apiBase, timeoutMs: parseInt(document.getElementById('formTimeout').value) || 30000, maxTokens: parseInt(document.getElementById('formMaxTokens').value) || 4096, temperature: parseFloat(document.getElementById('formTemp').value) || 0.7, priority: parseInt(document.getElementById('formPriority').value) || 1, supportsStreaming: document.getElementById('formStreaming').checked, supportsVision: document.getElementById('formVision').checked };
+  if (editId) { const m = adminModels.find(x => x.id === editId); if (m) Object.assign(m, data); }
+  else adminModels.push({ id: 'm' + Date.now(), ...data, isEnabled: true });
+  closeFullscreen(); showToast(getLang() === 'zh' ? '✅ 保存成功' : '✅ Saved successfully'); render();
+}
+
+// ==========================
+// UTILS
+// ==========================
+function showToast(msg) {
+  document.querySelector('.toast')?.remove();
+  const toast = document.createElement('div'); toast.className = 'toast'; toast.textContent = msg;
+  document.body.appendChild(toast); setTimeout(() => toast.remove(), 2000);
+}
+
+function switchLang(lang) { setLang(lang); chatMessages = []; translateResult = null; translateInputText = ''; translateFromLang = ''; translateToLang = ''; render(); }
+
+function bindEvents() {
+  const ta = document.getElementById('chatInput');
+  if (ta) ta.addEventListener('input', function() { this.style.height = 'auto'; this.style.height = Math.min(this.scrollHeight, 140) + 'px'; });
+  if (translateFromLang) {
+    const fl = document.getElementById('fromLang');
+    if (fl) fl.value = translateFromLang;
+  }
+  if (translateToLang) {
+    const tl = document.getElementById('toLang');
+    if (tl) tl.value = translateToLang;
+  }
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeFullscreen(); });
+document.addEventListener('DOMContentLoaded', () => {
+  // Check for OAuth callback parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  const authStatus = urlParams.get('auth');
+  const provider = urlParams.get('provider');
+  
+  if (authStatus === 'success' && provider) {
+    // Create user object from OAuth provider
+    const isZh = getLang() === 'zh';
+    const mockUser = {
+      name: provider === 'google' ? 'Google User' : '微信用户',
+      email: provider === 'google' ? 'user@gmail.com' : 'user@wechat.com',
+      avatar: provider === 'google' ? 'G' : '微',
+      provider,
+      joinedAt: new Date().toISOString(),
+      role: 'user',
+    };
+    setAuthUser(mockUser);
+    showToast(isZh ? `${provider === 'google' ? 'Google' : '微信'} 登录成功！` : `${provider === 'google' ? 'Google' : 'WeChat'} login successful!`);
+    
+    // Clean up URL parameters
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+  
+  loadChatHistory();
+  render();
+});
+
+// ==========================
+// INITIALIZATION
+// ==========================
+
+// Initialize Web Speech API voices (load async)
+if ('speechSynthesis' in window) {
+  // Voices might not be immediately available
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = () => {
+    window.speechSynthesis.getVoices();
+  };
+}
+
+// Health check for API availability
+async function checkApiHealth() {
+  try {
+    const response = await fetch('/api/health');
+    const data = await response.json();
+    console.log('API Status:', data.status, 'LLM Configured:', data.llmConfigured);
+    return data;
+  } catch (e) {
+    console.warn('API health check failed:', e);
+    return null;
+  }
+}
+
+// Run health check on load
+checkApiHealth();
+
+  </script>
+  <script>
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        const ls = document.getElementById('loadingScreen');
+        if (ls) {
+          ls.classList.add('fade-out');
+          setTimeout(() => ls.remove(), 500);
+        }
+      }, 800);
+    });
+  </script>
+</body>
+</html>

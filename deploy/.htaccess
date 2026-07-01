@@ -1,0 +1,21 @@
+RewriteEngine On
+
+# ==================== LLM API Configuration ====================
+# Uncomment and fill in your API key for real AI responses
+# Without this, the app uses built-in mock responses
+# SetEnv LLM_API_URL  "https://api.xiaomimimo.com/v1/chat/completions"
+# SetEnv LLM_MODEL    "mimo-v2-flash"
+# SetEnv LLM_API_KEY  "your-api-key-here"
+
+# ==================== URL Rewriting ====================
+
+# API routes without .php extension → rewrite to .php if the file exists
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}.php -f
+RewriteRule ^api/(.+)$ api/$1.php [L,QSA]
+
+# SPA fallback - all non-file requests go to index.html
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.html [L]

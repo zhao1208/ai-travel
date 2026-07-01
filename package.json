@@ -1,0 +1,15 @@
+{
+  "name": "ai-travel-assistant",
+  "version": "1.0.0",
+  "description": "AI Travel Assistant for China - AI旅行助手",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.0",
+    "express-session": "^1.17.0",
+    "passport": "^0.6.0",
+    "passport-google-oauth20": "^2.0.0",
+    "passport-wechat": "^2.0.0"
+  }
+}
