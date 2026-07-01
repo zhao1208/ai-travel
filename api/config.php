@@ -1,9 +1,9 @@
 <?php
 // Database Configuration - 请修改以下配置
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'travelmate');
-define('DB_USER', 'root');
-define('DB_PASS', '');
+define('DB_HOST', 'my8637628990.xincache1.cn');
+define('DB_NAME', 'my8637628990');
+define('DB_USER', 'my8637628990');
+define('DB_PASS', 'ZHAOkang1208!');
 define('DB_CHARSET', 'utf8mb4');
 
 // Session Configuration

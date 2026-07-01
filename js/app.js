@@ -121,7 +121,32 @@ function saveRegisteredUsers(users) {
 }
 
 // Auth actions
-function doLogin(email, password) {
+async function doLogin(email, password) {
+  // 1. 优先尝试 API 登录（查询 MySQL 数据库）
+  try {
+    const res = await fetch('/api/auth?action=login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      // API 成功 → 同步到 localStorage 做离线缓存
+      const user = data.data;
+      setAuthUser(user);
+      const users = getRegisteredUsers();
+      users[email] = { name: user.name, email: user.email, password, avatar: user.avatar, role: user.role, joinedAt: user.joinedAt };
+      saveRegisteredUsers(users);
+      return { ok: true };
+    }
+    // API 返回错误（密码错误等）→ 直接返回
+    return { ok: false, key: 'auth_err_wrong_pw', apiMsg: data.message };
+  } catch {
+    // API 不可用 → 静默回退 localStorage
+    console.warn('API login unavailable, falling back to local storage');
+  }
+
+  // 2. 回退 localStorage 登录
   const users = getRegisteredUsers();
   if (!users[email]) return { ok: false, key: 'auth_err_not_found' };
   if (users[email].password !== password) return { ok: false, key: 'auth_err_wrong_pw' };
@@ -131,7 +156,29 @@ function doLogin(email, password) {
   return { ok: true };
 }
 
-function doRegister(name, email, password) {
+async function doRegister(name, email, password) {
+  // 1. 优先尝试 API 注册（写入 MySQL）
+  try {
+    const res = await fetch('/api/auth?action=register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      const user = data.data;
+      setAuthUser(user);
+      const users = getRegisteredUsers();
+      users[email] = { name, email, password, avatar: user.avatar, role: user.role, joinedAt: user.joinedAt };
+      saveRegisteredUsers(users);
+      return { ok: true };
+    }
+    return { ok: false, key: 'auth_err_exists', apiMsg: data.message };
+  } catch {
+    console.warn('API register unavailable, falling back to local storage');
+  }
+
+  // 2. 回退 localStorage 注册
   const users = getRegisteredUsers();
   if (users[email]) return { ok: false, key: 'auth_err_exists' };
   const user = { name, email, password, avatar: name.charAt(0).toUpperCase(), joinedAt: new Date().toISOString(), role: ADMIN_EMAILS.includes(email) ? 'admin' : 'user' };
@@ -142,6 +189,8 @@ function doRegister(name, email, password) {
 }
 
 function doLogout() {
+  // 通知服务端销毁 session
+  fetch('/api/auth?action=logout', { method: 'POST' }).catch(() => {});
   setAuthUser(null);
   currentPage = 'home';
   render();
@@ -466,7 +515,7 @@ function toggleAuthMode() {
   render();
 }
 
-function submitAuth() {
+async function submitAuth() {
   const email = document.getElementById('authEmail')?.value?.trim();
   const password = document.getElementById('authPassword')?.value;
   const errEl = document.getElementById('authError');
@@ -489,15 +538,15 @@ function submitAuth() {
     if (!name) { errEl.textContent = t('auth_err_name'); return; }
     if (password !== confirmPw) { errEl.textContent = t('auth_err_confirm'); return; }
 
-    const result = doRegister(name, email, password);
-    if (!result.ok) { errEl.textContent = t(result.key); return; }
+    const result = await doRegister(name, email, password);
+    if (!result.ok) { errEl.textContent = result.apiMsg || t(result.key); return; }
 
     showToast(t('auth_success_register'));
     currentPage = 'home';
     render();
   } else {
-    const result = doLogin(email, password);
-    if (!result.ok) { errEl.textContent = t(result.key); return; }
+    const result = await doLogin(email, password);
+    if (!result.ok) { errEl.textContent = result.apiMsg || t(result.key); return; }
 
     showToast(t('auth_success_login'));
     currentPage = 'home';
